@@ -1,6 +1,6 @@
 # Aqui Perto
 
-Focus timer and study analytics - sessions, streaks, and subject-level progress tracking. Monorepo with **NestJS** backend and **Angular 22** frontend.
+Real-time public transit app for Lisbon's metro area - nearby stops, trip planning, and live bus tracking. Built with **Angular 22**, **NestJS 11** & WebSockets.
 
 ![Angular](https://img.shields.io/badge/Angular-22-red)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-blue)
