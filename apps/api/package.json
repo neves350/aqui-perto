@@ -28,6 +28,8 @@
 		"@prisma/client": "^7.9.0",
 		"@scalar/nestjs-api-reference": "^1.2.11",
 		"axios": "^1.18.1",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.15.1",
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.1",
 		"tsx": "^4.23.1"
@@ -62,6 +64,9 @@
 		"testRegex": ".*\\.spec\\.ts$",
 		"transform": {
 			"^.+\\.(t|j)s$": "ts-jest"
+		},
+		"moduleNameMapper": {
+			"^src/(.*)$": "<rootDir>/$1"
 		},
 		"collectCoverageFrom": [
 			"**/*.(t|j)s"
