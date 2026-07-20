@@ -1,0 +1,19 @@
+{
+	"name": "aqui-perto",
+	"private": true,
+	"workspaces": [
+		"apps/*"
+	],
+	"scripts": {
+		"dev:api": "npm run start:dev --workspace=api",
+		"dev:web": "npm run start --workspace=web",
+		"dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+		"build": "npm run build --workspaces --if-present",
+		"lint": "biome check .",
+		"format": "biome check --write ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.4",
+		"concurrently": "^10.0.3"
+	}
+}
