@@ -15,7 +15,13 @@
 			"@core/*": ["./src/app/core/*"],
 			"@pages/*": ["./src/app/pages/*"],
 			"@environments/*": ["./src/environments/*"],
-			"@/*": ["./src/app/*"]
+			"@/*": ["./src/app/*"],
+			"@spartan-ng/helm/button": ["./src/app/shared/ui/button/src/index.ts"],
+			"@spartan-ng/helm/input": ["./src/app/shared/ui/input/src/index.ts"],
+			"@spartan-ng/helm/skeleton": ["./src/app/shared/ui/skeleton/src/index.ts"],
+			"@spartan-ng/helm/spinner": ["./src/app/shared/ui/spinner/src/index.ts"],
+			"@spartan-ng/helm/tooltip": ["./src/app/shared/ui/tooltip/src/index.ts"],
+			"@spartan-ng/helm/utils": ["./src/app/shared/ui/utils/src/index.ts"]
 		}
 	},
 	"angularCompilerOptions": {
