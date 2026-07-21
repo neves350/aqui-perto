@@ -1,3 +1,10 @@
 import { Routes } from '@angular/router'
 
-export const routes: Routes = []
+export const routes: Routes = [
+	{
+		path: '',
+		title: 'Inicio - Aqui Perto',
+		loadComponent: () =>
+			import('@pages/discovery/discovery').then((m) => m.Discovery),
+	},
+]

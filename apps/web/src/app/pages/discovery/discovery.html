@@ -1,0 +1,46 @@
+<div class="discovery">
+	<div class="discovery__map">
+		<app-map
+			[center]="center()"
+			[markers]="markers()"
+			(mapClick)="onMapClick($event)"
+		/>
+	</div>
+
+	<div class="discovery__panel">
+		@if (loading()) {
+			<p>A localizar...</p>
+		}
+
+		@if (geolocationError()) {
+			<p>
+				Não foi possível obter a tua localização. Escolhe um ponto no mapa
+				para veres as paragens próximas.
+			</p>
+		}
+
+		@if (!loading()) {
+			<ul>
+				@for (stop of stops(); track stop.id) {
+					<li>
+						<button type="button" (click)="selectStop(stop.id)">
+							{{ stop.name }}
+						</button>
+
+						@if (selectedStopId() === stop.id) {
+							@if (arrivalsLoading()) {
+								<p>A carregar chegadas...</p>
+							} @else {
+								<ul>
+									@for (arrival of arrivals(); track arrival.tripId) {
+										<li>{{ arrival.lineName }} — {{ arrival.arrivalTime }}</li>
+									}
+								</ul>
+							}
+						}
+					</li>
+				}
+			</ul>
+		}
+	</div>
+</div>
