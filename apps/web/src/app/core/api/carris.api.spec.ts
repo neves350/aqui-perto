@@ -70,7 +70,6 @@ describe('CarrisApi', () => {
 			longName: 'Alameda - Odivelas',
 			color: '#FF0000',
 			textColor: '#FFFFFF',
-			patterns: [],
 		})
 	})
 

@@ -1,7 +1,9 @@
 import { HttpClient } from '@angular/common/http'
 import { inject, Service } from '@angular/core'
 import { environment } from '@environments/environment.development'
-import { Arrival, Line, LineDetail, Stop } from './carris.types'
+import { Arrival } from '@/shared/models/arrival.model'
+import { Line } from '@/shared/models/line.model'
+import { Stop } from '@/shared/models/stop.model'
 
 @Service()
 export class CarrisApi {
@@ -25,7 +27,7 @@ export class CarrisApi {
 	}
 
 	getLineById(id: string) {
-		return this.http.get<LineDetail>(`${this.baseUrl}/lines/${id}`)
+		return this.http.get<Line>(`${this.baseUrl}/lines/${id}`)
 	}
 
 	getArrivals(stopId: string) {
