@@ -89,6 +89,39 @@ describe('StopsService', () => {
 		})
 	})
 
+	describe('search', () => {
+		it('matches by long_name case-insensitively', async () => {
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'abc',
+					long_name: 'Praça de Espanha',
+					lat: 38.7223,
+					lon: -9.1548,
+				},
+			])
+
+			const result = await service.search('espanha')
+
+			expect(result).toHaveLength(1)
+			expect(result[0].id).toBe('abc')
+		})
+
+		it('excludes stops that do not match the query', async () => {
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'abc',
+					long_name: 'Praça de Espanha',
+					lat: 38.7223,
+					lon: -9.1548,
+				},
+			])
+
+			const result = await service.search('odivelas')
+
+			expect(result).toHaveLength(0)
+		})
+	})
+
 	describe('findById', () => {
 		it('returns null when the stop does not exist', async () => {
 			mockCarris.getStopById.mockResolvedValue(null)

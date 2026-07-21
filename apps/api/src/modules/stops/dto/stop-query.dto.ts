@@ -1,23 +1,31 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { ApiPropertyOptional } from '@nestjs/swagger'
 import { Type } from 'class-transformer'
-import { IsLatitude, IsLongitude, IsOptional, IsPositive } from 'class-validator'
+import {
+	IsLatitude,
+	IsLongitude,
+	IsOptional,
+	IsPositive,
+	IsString,
+} from 'class-validator'
 
 export class StopQueryDto {
+	@IsOptional()
 	@Type(() => Number)
 	@IsLatitude({ message: 'lat must be a valid latitude' })
-	@ApiProperty({
-		description: 'Latitude of the reference point',
+	@ApiPropertyOptional({
+		description: 'Latitude of the reference point (required unless "query" is given)',
 		example: 38.7223,
 	})
-	lat: number
+	lat?: number
 
+	@IsOptional()
 	@Type(() => Number)
 	@IsLongitude({ message: 'lon must be a valid longitude' })
-	@ApiProperty({
-		description: 'Longitude of the reference point',
+	@ApiPropertyOptional({
+		description: 'Longitude of the reference point (required unless "query" is given)',
 		example: -9.1393,
 	})
-	lon: number
+	lon?: number
 
 	@IsOptional()
 	@Type(() => Number)
@@ -28,4 +36,12 @@ export class StopQueryDto {
 		default: 400,
 	})
 	radius?: number = 400
+
+	@IsOptional()
+	@IsString()
+	@ApiPropertyOptional({
+		description: 'Search stops by name instead of proximity',
+		example: 'Espanha',
+	})
+	query?: string
 }

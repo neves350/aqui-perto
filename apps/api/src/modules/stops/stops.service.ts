@@ -27,6 +27,20 @@ export class StopsService {
 			.sort((a, b) => a.distanceMeters - b.distanceMeters)
 	}
 
+	async search(query: string): Promise<StopResponseDto[]> {
+		const stops = await this.carrisClientService.getStops()
+		const normalizedQuery = query.toLowerCase()
+
+		return stops
+			.filter((stop) => stop.long_name.toLowerCase().includes(normalizedQuery))
+			.map((stop) => ({
+				id: stop.id,
+				name: stop.long_name,
+				lat: stop.lat,
+				lon: stop.lon,
+			}))
+	}
+
 	async findById(id: string): Promise<StopResponseDto | null> {
 		const stop = await this.carrisClientService.getStopById(id)
 		if (!stop) return null

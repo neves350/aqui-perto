@@ -1,4 +1,11 @@
-import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common'
+import {
+	BadRequestException,
+	Controller,
+	Get,
+	NotFoundException,
+	Param,
+	Query,
+} from '@nestjs/common'
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger'
 import { StopQueryDto } from './dto/stop-query.dto'
 import { StopsService } from './stops.service'
@@ -8,9 +15,19 @@ export class StopsController {
 	constructor(private readonly stopsService: StopsService) {}
 
 	@Get()
-	@ApiOperation({ summary: 'Find stops near a given point' })
-	@ApiResponse({ status: 400, description: 'Invalid lat/lon/radius' })
-	findNearby(@Query() query: StopQueryDto) {
+	@ApiOperation({ summary: 'Find stops by name, or near a given point' })
+	@ApiResponse({ status: 400, description: 'Invalid query, or missing lat/lon' })
+	find(@Query() query: StopQueryDto) {
+		if (query.query) {
+			return this.stopsService.search(query.query)
+		}
+
+		if (query.lat === undefined || query.lon === undefined) {
+			throw new BadRequestException(
+				'Either "query" or both "lat" and "lon" must be provided',
+			)
+		}
+
 		return this.stopsService.findNearby(query.lat, query.lon, query.radius)
 	}
 
