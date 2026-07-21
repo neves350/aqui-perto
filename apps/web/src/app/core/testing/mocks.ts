@@ -15,6 +15,7 @@ export const markerInstance = {
 export const carrisServiceMock = {
 	getStopsNearby: vi.fn(),
 	getStopById: vi.fn(),
+	searchStops: vi.fn(),
 	searchLines: vi.fn(),
 	getLineById: vi.fn(),
 	getArrivals: vi.fn(),
