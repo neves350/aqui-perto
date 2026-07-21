@@ -50,6 +50,30 @@ describe('MapComponent', () => {
 		expect(markerInstance.setLngLat).toHaveBeenCalledWith([-9.15, 38.73])
 	})
 
+	it('renders a marker for the user position when provided', () => {
+		const fixture = TestBed.createComponent(MapComponent)
+		fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
+		fixture.componentRef.setInput('userPosition', { lat: 38.72, lon: -9.14 })
+		fixture.detectChanges()
+
+		expect(MockMarker).toHaveBeenCalledWith(
+			expect.objectContaining({ color: expect.any(String) }),
+		)
+		expect(markerInstance.setLngLat).toHaveBeenCalledWith([-9.14, 38.72])
+	})
+
+	it('removes the user marker when userPosition becomes null', () => {
+		const fixture = TestBed.createComponent(MapComponent)
+		fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
+		fixture.componentRef.setInput('userPosition', { lat: 38.72, lon: -9.14 })
+		fixture.detectChanges()
+
+		fixture.componentRef.setInput('userPosition', null)
+		fixture.detectChanges()
+
+		expect(markerInstance.remove).toHaveBeenCalled()
+	})
+
 	it('emits mapClick with lat/lon when the map is clicked', () => {
 		const fixture = TestBed.createComponent(MapComponent)
 		fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })

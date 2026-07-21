@@ -57,6 +57,7 @@ describe('Discovery', () => {
 			{ id: 'stop-1', name: 'Praça de Espanha', lat: 38.72, lon: -9.15 },
 		])
 		expect(component.loading()).toBe(false)
+		expect(component.userPosition()).toEqual({ lat: 38.7223, lon: -9.1393 })
 	})
 
 	it('shows a geolocation error state when permission is denied', () => {
@@ -70,6 +71,7 @@ describe('Discovery', () => {
 
 		expect(component.geolocationError()).toBe(true)
 		expect(component.loading()).toBe(false)
+		expect(component.userPosition()).toBeNull()
 		expect(carrisServiceMock.getStopsNearby).not.toHaveBeenCalled()
 	})
 

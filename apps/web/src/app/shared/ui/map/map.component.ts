@@ -24,6 +24,8 @@ const OSM_STYLE: StyleSpecification = {
 	layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
 }
 
+const USER_POSITION_COLOR = '#2563eb'
+
 @Component({
 	selector: 'app-map',
 	template: `<div #mapContainer class="map-container"></div>`,
@@ -37,12 +39,14 @@ const OSM_STYLE: StyleSpecification = {
 export class MapComponent implements AfterViewInit, OnDestroy {
 	center = input.required<MapCenter>()
 	markers = input<MapMarker[]>([])
+	userPosition = input<MapCenter | null>(null)
 	mapClick = output<MapCenter>()
 
 	private readonly mapContainer =
 		viewChild.required<ElementRef<HTMLDivElement>>('mapContainer')
 	private map?: MapLibreMap
 	private markerInstances: Marker[] = []
+	private userMarkerInstance?: Marker
 
 	constructor() {
 		effect(() => {
@@ -53,6 +57,11 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 		effect(() => {
 			const markers = this.markers()
 			if (this.map) this.renderMarkers(markers)
+		})
+
+		effect(() => {
+			const userPosition = this.userPosition()
+			if (this.map) this.renderUserMarker(userPosition)
 		})
 	}
 
@@ -70,6 +79,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 		})
 
 		this.renderMarkers(this.markers())
+		this.renderUserMarker(this.userPosition())
 	}
 
 	ngOnDestroy(): void {
@@ -81,5 +91,14 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 		this.markerInstances = markers.map((marker) =>
 			new Marker().setLngLat([marker.lon, marker.lat]).addTo(this.map!),
 		)
+	}
+
+	private renderUserMarker(position: MapCenter | null): void {
+		this.userMarkerInstance?.remove()
+		this.userMarkerInstance = position
+			? new Marker({ color: USER_POSITION_COLOR })
+					.setLngLat([position.lon, position.lat])
+					.addTo(this.map!)
+			: undefined
 	}
 }
