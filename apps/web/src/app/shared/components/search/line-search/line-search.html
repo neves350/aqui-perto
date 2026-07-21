@@ -1,0 +1,22 @@
+<input
+	type="search"
+	placeholder="Pesquisar linha por nome ou número..."
+	[value]="query()"
+	(input)="onQueryChange($any($event.target).value)"
+/>
+
+<ul>
+	@for (line of lines(); track line.id) {
+		<li>
+			<button type="button" (click)="toggleLine(line.id)">
+				{{ line.shortName }} — {{ line.longName }}
+			</button>
+
+			@if (selectedLineId() === line.id) {
+				<p [style.color]="line.color">
+					Linha {{ line.shortName }}: {{ line.longName }}
+				</p>
+			}
+		</li>
+	}
+</ul>
