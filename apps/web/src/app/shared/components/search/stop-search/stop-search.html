@@ -1,0 +1,20 @@
+<input
+	type="search"
+	placeholder="Pesquisar paragem por nome..."
+	[value]="query()"
+	(input)="onQueryChange($any($event.target).value)"
+/>
+
+<ul>
+	@for (stop of stops(); track stop.id) {
+		<li>
+			<button type="button" (click)="toggleStop(stop.id)">
+				{{ stop.name }}
+			</button>
+
+			@if (selectedStopId() === stop.id) {
+				<app-stop-arrivals-list [stopId]="stop.id" />
+			}
+		</li>
+	}
+</ul>
