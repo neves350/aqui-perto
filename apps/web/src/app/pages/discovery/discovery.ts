@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core'
-import { Arrival } from '@/shared/models/arrival.model'
+import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-arrivals-list'
 import { Stop } from '@/shared/models/stop.model'
 import { MapComponent } from '@/shared/ui/map/map.component'
 import { MapCenter } from '@/shared/ui/map/map.types'
@@ -10,7 +10,7 @@ const DEFAULT_CENTER: MapCenter = { lat: 38.7223, lon: -9.1393 }
 
 @Component({
 	selector: 'app-discovery',
-	imports: [MapComponent],
+	imports: [MapComponent, StopArrivalsList],
 	templateUrl: './discovery.html',
 	styles: `
 		.discovery {
@@ -39,8 +39,6 @@ export class Discovery {
 	readonly center = signal<MapCenter>(DEFAULT_CENTER)
 	readonly stops = signal<Stop[]>([])
 	readonly selectedStopId = signal<string | null>(null)
-	readonly arrivals = signal<Arrival[]>([])
-	readonly arrivalsLoading = signal(false)
 
 	readonly markers = computed(() =>
 		this.stops().map((stop) => ({ id: stop.id, lat: stop.lat, lon: stop.lon })),
@@ -68,14 +66,6 @@ export class Discovery {
 
 	selectStop(stopId: string): void {
 		this.selectedStopId.set(stopId)
-		this.arrivalsLoading.set(true)
-		this.carrisService.getArrivals(stopId).subscribe({
-			next: (arrivals) => {
-				this.arrivals.set(arrivals)
-				this.arrivalsLoading.set(false)
-			},
-			error: () => this.arrivalsLoading.set(false),
-		})
 	}
 
 	private loadStops(point: MapCenter): void {

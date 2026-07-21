@@ -94,41 +94,23 @@ describe('Discovery', () => {
 		])
 	})
 
-	it('loads arrivals for the selected stop', () => {
+	it('selects a stop, delegating arrivals loading to StopArrivalsList', () => {
 		geolocationServiceMock.getCurrentPosition.mockReturnValue(
 			of({ lat: 38.7223, lon: -9.1393 }),
 		)
 		carrisServiceMock.getStopsNearby.mockReturnValue(
 			of([{ id: 'stop-1', name: 'Praça de Espanha', lat: 38.72, lon: -9.15 }]),
 		)
-		carrisServiceMock.getArrivals.mockReturnValue(
-			of([
-				{
-					tripId: 'trip-1',
-					lineId: '4200_0',
-					lineName: '758 Odivelas',
-					arrivalTime: '09:05',
-					type: 'scheduled',
-				},
-			]),
-		)
+		carrisServiceMock.getArrivals.mockReturnValue(of([]))
 
 		fixture = TestBed.createComponent(Discovery)
 		component = fixture.componentInstance
 		fixture.detectChanges()
 
 		component.selectStop('stop-1')
+		fixture.detectChanges()
 
-		expect(carrisServiceMock.getArrivals).toHaveBeenCalledWith('stop-1')
 		expect(component.selectedStopId()).toBe('stop-1')
-		expect(component.arrivals()).toEqual([
-			{
-				tripId: 'trip-1',
-				lineId: '4200_0',
-				lineName: '758 Odivelas',
-				arrivalTime: '09:05',
-				type: 'scheduled',
-			},
-		])
+		expect(carrisServiceMock.getArrivals).toHaveBeenCalledWith('stop-1')
 	})
 })

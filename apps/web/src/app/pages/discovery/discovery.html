@@ -28,15 +28,7 @@
 						</button>
 
 						@if (selectedStopId() === stop.id) {
-							@if (arrivalsLoading()) {
-								<p>A carregar chegadas...</p>
-							} @else {
-								<ul>
-									@for (arrival of arrivals(); track arrival.tripId) {
-										<li>{{ arrival.lineName }} — {{ arrival.arrivalTime }}</li>
-									}
-								</ul>
-							}
+							<app-stop-arrivals-list [stopId]="stop.id" />
 						}
 					</li>
 				}
