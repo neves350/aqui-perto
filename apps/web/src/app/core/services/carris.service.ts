@@ -13,6 +13,10 @@ export class CarrisService {
 		return this.carrisApi.getStopById(id)
 	}
 
+	searchStops(query: string) {
+		return this.carrisApi.searchStops(query)
+	}
+
 	searchLines(query: string) {
 		return this.carrisApi.searchLines(query)
 	}

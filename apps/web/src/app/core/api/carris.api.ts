@@ -20,6 +20,12 @@ export class CarrisApi {
 		return this.http.get<Stop>(`${this.baseUrl}/stops/${id}`)
 	}
 
+	searchStops(query: string) {
+		return this.http.get<Stop[]>(`${this.baseUrl}/stops`, {
+			params: { query },
+		})
+	}
+
 	searchLines(query: string) {
 		return this.http.get<Line[]>(`${this.baseUrl}/lines`, {
 			params: { query },

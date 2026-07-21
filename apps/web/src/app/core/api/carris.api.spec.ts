@@ -47,6 +47,18 @@ describe('CarrisApi', () => {
 		req.flush({ id: '070001', name: 'Praça de Espanha', lat: 0, lon: 0 })
 	})
 
+	it('searchStops requests /stops with query param', () => {
+		api.searchStops('Espanha').subscribe()
+
+		const req = httpMock.expectOne(
+			(r) =>
+				r.url === `${environment.apiUrl}/stops` &&
+				r.params.get('query') === 'Espanha',
+		)
+		expect(req.request.method).toBe('GET')
+		req.flush([])
+	})
+
 	it('searchLines requests /lines with query param', () => {
 		api.searchLines('758').subscribe()
 
