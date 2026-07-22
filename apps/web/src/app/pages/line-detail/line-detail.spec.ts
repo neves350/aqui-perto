@@ -126,6 +126,57 @@ describe('LineDetail', () => {
 		expect(stopLabels).toEqual(['1. Alameda', '2. Odivelas'])
 	})
 
+	it('shows minutes until arrival only when 30 or fewer, falling back to the scheduled time otherwise', () => {
+		carrisServiceMock.getLineRoute.mockReturnValue(
+			of({
+				...LINE_ROUTE,
+				stops: [
+					{
+						stopId: 'stopA',
+						name: 'Alameda',
+						sequence: 1,
+						lat: 38.736,
+						lon: -9.136,
+						minutesUntilArrival: 5,
+						scheduledArrival: '10:05',
+					},
+					{
+						stopId: 'stopB',
+						name: 'Odivelas',
+						sequence: 2,
+						lat: 38.791,
+						lon: -9.183,
+						minutesUntilArrival: 35,
+						scheduledArrival: '10:40',
+					},
+					{
+						stopId: 'stopC',
+						name: 'Chelas',
+						sequence: 3,
+						lat: 38.75,
+						lon: -9.12,
+						minutesUntilArrival: null,
+						scheduledArrival: null,
+					},
+				],
+			}),
+		)
+
+		fixture = TestBed.createComponent(LineDetail)
+		fixture.componentRef.setInput('id', '4200_0')
+		fixture.detectChanges()
+
+		const arrivalLabels = fixture.debugElement
+			.queryAll(By.css('[aria-controls^="stop-arrivals-"] span:last-child'))
+			.map((debugEl) => debugEl.nativeElement.textContent.trim())
+
+		expect(arrivalLabels).toEqual([
+			'5 min · 10:05',
+			'10:40',
+			'Sem horário previsto',
+		])
+	})
+
 	it('shows the longName reordered to match the current direction headsign', () => {
 		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
 

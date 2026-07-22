@@ -36,14 +36,16 @@
 		@for (stop of line.stops; track stop.stopId) {
 		<li>
 			<button type="button" hlmBtn variant="ghost" class="h-auto w-full justify-between px-3 py-2 text-left"
-				[attr.aria-expanded]="selectedStopId() === stop.stopId"
-				[attr.aria-controls]="'stop-arrivals-' + stop.stopId" (click)="selectStop(stop.stopId)">
+				[attr.aria-expanded]="selectedStopId() === stop.stopId" [attr.aria-controls]="'stop-arrivals-' + stop.stopId"
+				(click)="selectStop(stop.stopId)">
 				<span>{{ stop.sequence }}. {{ stop.name }}</span>
-				@if (stop.minutesUntilArrival !== null) {
-				<span>{{ stop.minutesUntilArrival }} min · {{ stop.scheduledArrival }}</span>
-				} @else {
-				<span>Sem horário previsto</span>
-				}
+				@if (stop.minutesUntilArrival !== null && stop.minutesUntilArrival <= 30) { <span>{{ stop.minutesUntilArrival }}
+					min · {{ stop.scheduledArrival }}</span>
+					} @else if (stop.scheduledArrival !== null) {
+					<span>{{ stop.scheduledArrival }}</span>
+					} @else {
+					<span>Sem horário previsto</span>
+					}
 			</button>
 
 			@if (selectedStopId() === stop.stopId) {
