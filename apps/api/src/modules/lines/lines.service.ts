@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
-import { CarrisClientService } from 'src/integrations/carris/carris-client.service'
 import { CarrisPattern } from 'src/common/types/carris.types'
+import { formatGtfsTimeAsClock } from 'src/common/utils/gtfs-time'
+import { CarrisClientService } from 'src/integrations/carris/carris-client.service'
 import {
 	LineDetailResponseDto,
 	LineDirectionDto,
@@ -145,9 +146,13 @@ export class LinesService {
 						lat: stop?.lat ?? 0,
 						lon: stop?.lon ?? 0,
 						minutesUntilArrival: nextArrival
-							? Math.round((nextArrival.date.getTime() - now.getTime()) / 60_000)
+							? Math.round(
+									(nextArrival.date.getTime() - now.getTime()) / 60_000,
+								)
 							: null,
-						scheduledArrival: nextArrival ? nextArrival.time.slice(0, 5) : null,
+						scheduledArrival: nextArrival
+							? formatGtfsTimeAsClock(nextArrival.time)
+							: null,
 					}
 				}),
 			shape,

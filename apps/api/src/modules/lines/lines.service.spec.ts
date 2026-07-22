@@ -327,6 +327,54 @@ describe('LinesService', () => {
 			})
 		})
 
+		it('renders an after-midnight GTFS scheduled_arrival as real wall-clock time', async () => {
+			jest.useFakeTimers().setSystemTime(new Date('2026-07-22T23:50:00'))
+
+			mockCarris.getLineById.mockResolvedValue({
+				id: '4200_0',
+				short_name: '758',
+				long_name: 'Alameda - Odivelas',
+				color: '#FF0000',
+				text_color: '#FFFFFF',
+				route_ids: ['route1'],
+				pattern_ids: ['pattern1'],
+			})
+			mockCarris.getPattern.mockResolvedValue({
+				id: 'pattern1',
+				line_id: '4200_0',
+				route_id: 'route1',
+				direction_id: 0,
+				headsign: 'Odivelas',
+				path: [{ stop_id: 'stopA', stop_sequence: 1, distance: 0 }],
+				trips: [
+					{
+						schedule: [
+							{ stop_id: 'stopA', stop_sequence: 1, arrival_time: '24:25:00' },
+						],
+						trip_ids: ['trip1'],
+						service_ids: ['service1'],
+						valid_on: ['20260722'],
+					},
+				],
+			})
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'stopA',
+					long_name: 'Alameda',
+					short_name: null,
+					lat: 38.736,
+					lon: -9.136,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+			])
+
+			const result = await service.getRouteDetail('4200_0')
+
+			expect(result?.stops[0].scheduledArrival).toBe('00:25')
+		})
+
 		it('maps the shape geometry when the pattern has a shape_id', async () => {
 			jest.useFakeTimers().setSystemTime(new Date('2026-07-22T10:00:00'))
 

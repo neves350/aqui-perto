@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { formatGtfsTimeAsClock } from 'src/common/utils/gtfs-time'
 import { CarrisClientService } from 'src/integrations/carris/carris-client.service'
 import { ArrivalResponseDto } from './dto/arrival-response.dto'
 
@@ -38,7 +39,7 @@ export class ArrivalsService {
 					lineName: shortName
 						? `${shortName} ${arrival.headsign}`
 						: arrival.headsign,
-					arrivalTime: arrival.scheduled_arrival!.slice(0, 5),
+					arrivalTime: formatGtfsTimeAsClock(arrival.scheduled_arrival!),
 					type: 'scheduled' as const,
 				}
 			})

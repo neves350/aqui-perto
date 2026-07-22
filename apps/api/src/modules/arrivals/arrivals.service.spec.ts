@@ -138,6 +138,30 @@ describe('ArrivalsService', () => {
 			])
 		})
 
+		it('renders after-midnight GTFS times as real wall-clock time', async () => {
+			mockCarris.getArrivalsByStop.mockResolvedValue([
+				{
+					line_id: '4200_0',
+					pattern_id: 'pattern1',
+					route_id: 'route1',
+					trip_id: 'trip-midnight',
+					headsign: 'Odivelas',
+					stop_sequence: 1,
+					scheduled_arrival: '24:25:00',
+					scheduled_arrival_unix: now + 600,
+					estimated_arrival: null,
+					estimated_arrival_unix: null,
+					observed_arrival: null,
+					observed_arrival_unix: null,
+					vehicle_id: null,
+				},
+			])
+
+			const result = await service.getArrivalsForStop('070001')
+
+			expect(result[0].arrivalTime).toBe('00:25')
+		})
+
 		it('limits the number of results returned', async () => {
 			mockCarris.getArrivalsByStop.mockResolvedValue(
 				Array.from({ length: 15 }, (_, i) => ({
