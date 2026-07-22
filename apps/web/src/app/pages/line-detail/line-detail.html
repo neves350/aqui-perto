@@ -1,39 +1,42 @@
 @if (loading()) {
-<p>A carregar percurso...</p>
+<div class="flex h-dvh items-center justify-center">
+	<hlm-spinner class="size-8" aria-label="A carregar percurso..." />
+</div>
 } @else if (route(); as line) {
-<div class="line-detail">
-	<header class="line-detail__header">
-		<a routerLink="/">
+<div class="flex h-dvh flex-col">
+	<header class="flex items-center gap-3 p-4">
+		<a routerLink="/" hlmBtn variant="ghost" size="sm">
 			<svg lucideArrowLeft class="size-4"></svg>
 			Voltar
 		</a>
-		<span class="line-detail__badge" [style.background]="line.color" [style.color]="line.textColor">
+		<span class="inline-flex items-center justify-center rounded px-2 py-1 text-sm font-bold"
+			[style.background]="line.color" [style.color]="line.textColor">
 			{{ line.shortName }}
 		</span>
 		<h1>{{ directionalLongName() }}</h1>
 	</header>
 
 	@if (line.directions.length > 1) {
-	<div class="line-detail__directions">
+	<div class="flex gap-2 px-4 pb-4">
 		@for (dir of line.directions; track dir.directionId) {
-		<button type="button" class="line-detail__direction" [class.line-detail__direction--active]="
-							dir.directionId === line.directionId
-						" [attr.aria-pressed]="dir.directionId === line.directionId" (click)="selectDirection(dir.directionId)">
+		<button type="button" hlmBtn size="sm" [variant]="dir.directionId === line.directionId ? 'default' : 'outline'"
+			[attr.aria-pressed]="dir.directionId === line.directionId" (click)="selectDirection(dir.directionId)">
 			{{ dir.headsign }}
 		</button>
 		}
 	</div>
 	}
 
-	<div class="line-detail__map">
+	<div class="h-[40%]">
 		<app-map [center]="center()" [route]="mapRoute()" [routeStops]="mapStops()" />
 	</div>
 
 	<h2>Paragens do percurso</h2>
-	<ul class="line-detail__stops">
+	<ul class="m-0 flex-1 list-none overflow-y-auto p-4">
 		@for (stop of line.stops; track stop.stopId) {
 		<li>
-			<button type="button" class="line-detail__stop" [attr.aria-expanded]="selectedStopId() === stop.stopId"
+			<button type="button" hlmBtn variant="ghost" class="h-auto w-full justify-between px-3 py-2 text-left"
+				[attr.aria-expanded]="selectedStopId() === stop.stopId"
 				[attr.aria-controls]="'stop-arrivals-' + stop.stopId" (click)="selectStop(stop.stopId)">
 				<span>{{ stop.sequence }}. {{ stop.name }}</span>
 				@if (stop.minutesUntilArrival !== null) {

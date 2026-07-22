@@ -3,10 +3,10 @@ import { By } from '@angular/platform-browser'
 import { provideRouter, Router } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
 import { carrisServiceMock } from '@core/testing/mocks'
-import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-arrivals-list'
-import { MapComponent } from '@/shared/ui/map/map.component'
 import { of, throwError } from 'rxjs'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-arrivals-list'
+import { MapComponent } from '@/shared/ui/map/map.component'
 import { LineDetail } from './line-detail'
 
 vi.mock('maplibre-gl', async () => {
@@ -120,7 +120,7 @@ describe('LineDetail', () => {
 		fixture.detectChanges()
 
 		const stopLabels = fixture.debugElement
-			.queryAll(By.css('.line-detail__stop span:first-child'))
+			.queryAll(By.css('[aria-controls^="stop-arrivals-"] span:first-child'))
 			.map((debugEl) => debugEl.nativeElement.textContent.trim())
 
 		expect(stopLabels).toEqual(['1. Alameda', '2. Odivelas'])
@@ -258,10 +258,7 @@ describe('LineDetail', () => {
 		fixture.componentRef.setInput('direction', 1)
 		fixture.detectChanges()
 
-		expect(carrisServiceMock.getLineRoute).toHaveBeenLastCalledWith(
-			'4200_0',
-			1,
-		)
+		expect(carrisServiceMock.getLineRoute).toHaveBeenLastCalledWith('4200_0', 1)
 	})
 
 	it('navigates with the selected direction as a query param', () => {
