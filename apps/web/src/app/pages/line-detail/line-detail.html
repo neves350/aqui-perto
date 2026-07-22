@@ -1,76 +1,57 @@
 @if (loading()) {
-	<p>A carregar percurso...</p>
+<p>A carregar percurso...</p>
 } @else if (route(); as line) {
-	<div class="line-detail">
-		<header class="line-detail__header">
-			<a routerLink="/search">‹ Voltar</a>
-			<span
-				class="line-detail__badge"
-				[style.background]="line.color"
-				[style.color]="line.textColor"
-			>
-				{{ line.shortName }}
-			</span>
-			<h1>{{ directionalLongName() }}</h1>
-		</header>
+<div class="line-detail">
+	<header class="line-detail__header">
+		<a routerLink="/">
+			<svg lucideArrowLeft class="size-4"></svg>
+			Voltar
+		</a>
+		<span class="line-detail__badge" [style.background]="line.color" [style.color]="line.textColor">
+			{{ line.shortName }}
+		</span>
+		<h1>{{ directionalLongName() }}</h1>
+	</header>
 
-		@if (line.directions.length > 1) {
-			<div class="line-detail__directions">
-				@for (dir of line.directions; track dir.directionId) {
-					<button
-						type="button"
-						class="line-detail__direction"
-						[class.line-detail__direction--active]="
+	@if (line.directions.length > 1) {
+	<div class="line-detail__directions">
+		@for (dir of line.directions; track dir.directionId) {
+		<button type="button" class="line-detail__direction" [class.line-detail__direction--active]="
 							dir.directionId === line.directionId
-						"
-						[attr.aria-pressed]="dir.directionId === line.directionId"
-						(click)="selectDirection(dir.directionId)"
-					>
-						{{ dir.headsign }}
-					</button>
-				}
-			</div>
+						" [attr.aria-pressed]="dir.directionId === line.directionId" (click)="selectDirection(dir.directionId)">
+			{{ dir.headsign }}
+		</button>
 		}
-
-		<div class="line-detail__map">
-			<app-map
-				[center]="center()"
-				[route]="mapRoute()"
-				[routeStops]="mapStops()"
-			/>
-		</div>
-
-		<h2>Paragens do percurso</h2>
-		<ul class="line-detail__stops">
-			@for (stop of line.stops; track stop.stopId) {
-				<li>
-					<button
-						type="button"
-						class="line-detail__stop"
-						[attr.aria-expanded]="selectedStopId() === stop.stopId"
-						[attr.aria-controls]="'stop-arrivals-' + stop.stopId"
-						(click)="selectStop(stop.stopId)"
-					>
-						<span>{{ stop.sequence }}. {{ stop.name }}</span>
-						@if (stop.minutesUntilArrival !== null) {
-							<span>{{ stop.minutesUntilArrival }} min · {{ stop.scheduledArrival }}</span>
-						} @else {
-							<span>Sem horário previsto</span>
-						}
-					</button>
-
-					@if (selectedStopId() === stop.stopId) {
-						<div [id]="'stop-arrivals-' + stop.stopId" aria-live="polite">
-							<app-stop-arrivals-list
-								[stopId]="stop.stopId"
-								[lineId]="line.id"
-							/>
-						</div>
-					}
-				</li>
-			}
-		</ul>
 	</div>
+	}
+
+	<div class="line-detail__map">
+		<app-map [center]="center()" [route]="mapRoute()" [routeStops]="mapStops()" />
+	</div>
+
+	<h2>Paragens do percurso</h2>
+	<ul class="line-detail__stops">
+		@for (stop of line.stops; track stop.stopId) {
+		<li>
+			<button type="button" class="line-detail__stop" [attr.aria-expanded]="selectedStopId() === stop.stopId"
+				[attr.aria-controls]="'stop-arrivals-' + stop.stopId" (click)="selectStop(stop.stopId)">
+				<span>{{ stop.sequence }}. {{ stop.name }}</span>
+				@if (stop.minutesUntilArrival !== null) {
+				<span>{{ stop.minutesUntilArrival }} min · {{ stop.scheduledArrival }}</span>
+				} @else {
+				<span>Sem horário previsto</span>
+				}
+			</button>
+
+			@if (selectedStopId() === stop.stopId) {
+			<div [id]="'stop-arrivals-' + stop.stopId" aria-live="polite">
+				<app-stop-arrivals-list [stopId]="stop.stopId" [lineId]="line.id" />
+			</div>
+			}
+		</li>
+		}
+	</ul>
+</div>
 } @else {
-	<p>Não foi possível carregar o percurso desta linha.</p>
+<p>Não foi possível carregar o percurso desta linha.</p>
 }

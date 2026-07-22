@@ -2,6 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
 import { Router, RouterLink } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
+import { LucideArrowLeft } from '@lucide/angular'
 import { catchError, map, Observable, of, startWith, switchMap } from 'rxjs'
 import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-arrivals-list'
 import { LineRoute } from '@/shared/models/line-route.model'
@@ -20,7 +21,7 @@ const INITIAL_STATE: LineDetailState = { loading: true, route: null }
 
 @Component({
 	selector: 'app-line-detail',
-	imports: [MapComponent, RouterLink, StopArrivalsList],
+	imports: [MapComponent, RouterLink, StopArrivalsList, LucideArrowLeft],
 	templateUrl: './line-detail.html',
 	styleUrl: './line-detail.css',
 })
