@@ -40,11 +40,28 @@
 		<ul class="line-detail__stops">
 			@for (stop of line.stops; track stop.stopId) {
 				<li>
-					<span>{{ stop.sequence }}. {{ stop.name }}</span>
-					@if (stop.minutesUntilArrival !== null) {
-						<span>{{ stop.minutesUntilArrival }} min · {{ stop.scheduledArrival }}</span>
-					} @else {
-						<span>Sem horário previsto</span>
+					<button
+						type="button"
+						class="line-detail__stop"
+						[attr.aria-expanded]="selectedStopId() === stop.stopId"
+						[attr.aria-controls]="'stop-arrivals-' + stop.stopId"
+						(click)="selectStop(stop.stopId)"
+					>
+						<span>{{ stop.sequence }}. {{ stop.name }}</span>
+						@if (stop.minutesUntilArrival !== null) {
+							<span>{{ stop.minutesUntilArrival }} min · {{ stop.scheduledArrival }}</span>
+						} @else {
+							<span>Sem horário previsto</span>
+						}
+					</button>
+
+					@if (selectedStopId() === stop.stopId) {
+						<div [id]="'stop-arrivals-' + stop.stopId" aria-live="polite">
+							<app-stop-arrivals-list
+								[stopId]="stop.stopId"
+								[lineId]="line.id"
+							/>
+						</div>
 					}
 				</li>
 			}

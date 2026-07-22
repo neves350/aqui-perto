@@ -1,8 +1,9 @@
-import { Component, computed, inject, input } from '@angular/core'
+import { Component, computed, inject, input, signal } from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
 import { Router, RouterLink } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
 import { catchError, map, Observable, of, startWith, switchMap } from 'rxjs'
+import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-arrivals-list'
 import { LineRoute } from '@/shared/models/line-route.model'
 import { MapComponent } from '@/shared/ui/map/map.component'
 import { MapCenter } from '@/shared/ui/map/map.types'
@@ -18,7 +19,7 @@ const INITIAL_STATE: LineDetailState = { loading: true, route: null }
 
 @Component({
 	selector: 'app-line-detail',
-	imports: [MapComponent, RouterLink],
+	imports: [MapComponent, RouterLink, StopArrivalsList],
 	templateUrl: './line-detail.html',
 	styles: `
 		.line-detail {
@@ -76,6 +77,19 @@ const INITIAL_STATE: LineDetailState = { loading: true, route: null }
 			list-style: none;
 			margin: 0;
 		}
+
+		.line-detail__stop {
+			display: flex;
+			justify-content: space-between;
+			width: 100%;
+			padding: 0.5rem 0;
+			border: none;
+			background: transparent;
+			color: inherit;
+			font: inherit;
+			text-align: left;
+			cursor: pointer;
+		}
 	`,
 })
 export class LineDetail {
@@ -117,10 +131,16 @@ export class LineDetail {
 
 	readonly center = computed(() => this.mapRoute()[0] ?? DEFAULT_CENTER)
 
+	readonly selectedStopId = signal<string | null>(null)
+
 	selectDirection(directionId: number): void {
 		this.router.navigate([], {
 			queryParams: { direction: directionId },
 			queryParamsHandling: 'merge',
 		})
+	}
+
+	selectStop(stopId: string): void {
+		this.selectedStopId.update((current) => (current === stopId ? null : stopId))
 	}
 }

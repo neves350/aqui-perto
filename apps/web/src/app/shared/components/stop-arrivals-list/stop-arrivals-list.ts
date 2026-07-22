@@ -20,6 +20,7 @@ export class StopArrivalsList {
 	private readonly carrisService = inject(CarrisService)
 
 	readonly stopId = input.required<string>()
+	readonly lineId = input<string | null>(null)
 
 	private readonly state = toSignal(
 		toObservable(this.stopId).pipe(
@@ -35,5 +36,11 @@ export class StopArrivalsList {
 	)
 
 	readonly loading = computed(() => this.state().loading)
-	readonly arrivals = computed(() => this.state().arrivals)
+	readonly arrivals = computed(() => {
+		const arrivals = this.state().arrivals
+		const lineId = this.lineId()
+		return lineId
+			? arrivals.filter((arrival) => arrival.lineId === lineId)
+			: arrivals
+	})
 }
