@@ -322,5 +322,79 @@ describe('LinesService', () => {
 				],
 			})
 		})
+
+		it('picks the soonest upcoming arrival across all trip groups valid today, not just the first', async () => {
+			jest.useFakeTimers().setSystemTime(new Date('2026-07-22T10:00:00'))
+
+			mockCarris.getLineById.mockResolvedValue({
+				id: '4200_0',
+				short_name: '758',
+				long_name: 'Alameda - Odivelas',
+				color: '#FF0000',
+				text_color: '#FFFFFF',
+				route_ids: ['route1'],
+				pattern_ids: ['pattern1'],
+			})
+			mockCarris.getPattern.mockResolvedValue({
+				id: 'pattern1',
+				line_id: '4200_0',
+				route_id: 'route1',
+				direction_id: 0,
+				headsign: 'Odivelas',
+				path: [{ stop_id: 'stopA', stop_sequence: 1, distance: 0 }],
+				trips: [
+					{
+						schedule: [
+							{ stop_id: 'stopA', stop_sequence: 1, arrival_time: '20:00:00' },
+						],
+						trip_ids: ['trip-evening'],
+						service_ids: ['service1'],
+						valid_on: ['20260722'],
+					},
+					{
+						schedule: [
+							{ stop_id: 'stopA', stop_sequence: 1, arrival_time: '08:00:00' },
+						],
+						trip_ids: ['trip-past'],
+						service_ids: ['service1'],
+						valid_on: ['20260722'],
+					},
+					{
+						schedule: [
+							{ stop_id: 'stopA', stop_sequence: 1, arrival_time: '10:05:00' },
+						],
+						trip_ids: ['trip-next'],
+						service_ids: ['service1'],
+						valid_on: ['20260722'],
+					},
+				],
+			})
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'stopA',
+					long_name: 'Alameda',
+					short_name: null,
+					lat: 38.736,
+					lon: -9.136,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+			])
+
+			const result = await service.getRouteDetail('4200_0')
+
+			expect(result?.stops).toEqual([
+				{
+					stopId: 'stopA',
+					name: 'Alameda',
+					sequence: 1,
+					lat: 38.736,
+					lon: -9.136,
+					minutesUntilArrival: 5,
+					scheduledArrival: '10:05',
+				},
+			])
+		})
 	})
 })

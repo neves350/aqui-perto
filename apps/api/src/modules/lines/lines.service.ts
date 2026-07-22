@@ -82,14 +82,20 @@ export class LinesService {
 
 		const now = new Date()
 		const today = this.formatAsYyyymmdd(now)
-		const tripGroup =
-			pattern.trips.find((trip) => trip.valid_on.includes(today)) ?? null
-		const arrivalTimeByStopId = new Map(
-			(tripGroup?.schedule ?? []).map((entry) => [
-				entry.stop_id,
-				entry.arrival_time,
-			]),
+		const tripGroupsToday = pattern.trips.filter((trip) =>
+			trip.valid_on.includes(today),
 		)
+		const arrivalTimesByStopId = new Map<string, string[]>()
+		for (const tripGroup of tripGroupsToday) {
+			for (const entry of tripGroup.schedule) {
+				const times = arrivalTimesByStopId.get(entry.stop_id)
+				if (times) {
+					times.push(entry.arrival_time)
+				} else {
+					arrivalTimesByStopId.set(entry.stop_id, [entry.arrival_time])
+				}
+			}
+		}
 
 		return {
 			id: line.id,
@@ -101,14 +107,10 @@ export class LinesService {
 				.sort((a, b) => a.stop_sequence - b.stop_sequence)
 				.map((pathStop) => {
 					const stop = stopById.get(pathStop.stop_id)
-					const arrivalTime = arrivalTimeByStopId.get(pathStop.stop_id) ?? null
-					const arrivalDate = arrivalTime
-						? this.toTodayDate(arrivalTime, now)
-						: null
-					const minutesUntilArrival =
-						arrivalDate && arrivalDate.getTime() >= now.getTime()
-							? Math.round((arrivalDate.getTime() - now.getTime()) / 60_000)
-							: null
+					const nextArrival = this.findNextArrival(
+						arrivalTimesByStopId.get(pathStop.stop_id) ?? [],
+						now,
+					)
 
 					return {
 						stopId: pathStop.stop_id,
@@ -116,11 +118,25 @@ export class LinesService {
 						sequence: pathStop.stop_sequence,
 						lat: stop?.lat ?? 0,
 						lon: stop?.lon ?? 0,
-						minutesUntilArrival,
-						scheduledArrival: arrivalTime ? arrivalTime.slice(0, 5) : null,
+						minutesUntilArrival: nextArrival
+							? Math.round((nextArrival.date.getTime() - now.getTime()) / 60_000)
+							: null,
+						scheduledArrival: nextArrival ? nextArrival.time.slice(0, 5) : null,
 					}
 				}),
 		}
+	}
+
+	private findNextArrival(
+		arrivalTimes: string[],
+		now: Date,
+	): { time: string; date: Date } | null {
+		return (
+			arrivalTimes
+				.map((time) => ({ time, date: this.toTodayDate(time, now) }))
+				.filter((candidate) => candidate.date.getTime() >= now.getTime())
+				.sort((a, b) => a.date.getTime() - b.date.getTime())[0] ?? null
+		)
 	}
 
 	private formatAsYyyymmdd(date: Date): string {
