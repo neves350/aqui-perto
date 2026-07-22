@@ -5,18 +5,18 @@
 	(input)="onQueryChange($any($event.target).value)"
 />
 
-<ul>
-	@for (line of lines(); track line.id) {
-		<li>
-			<button type="button" (click)="toggleLine(line.id)">
-				{{ line.shortName }} — {{ line.longName }}
-			</button>
+@for (group of groupedLines(); track group.color) {
+	<ul>
+		@for (line of group.lines; track line.id) {
+			<li>
+				<button type="button" (click)="toggleLine(line.id)">
+					{{ line.shortName }} — {{ line.longName }}
+				</button>
 
-			@if (selectedLineId() === line.id) {
-				<p [style.color]="line.color">
-					Linha {{ line.shortName }}: {{ line.longName }}
-				</p>
-			}
-		</li>
-	}
-</ul>
+				@if (selectedLineId() === line.id) {
+					<a [routerLink]="['/lines', line.id]">Ver percurso completo ›</a>
+				}
+			</li>
+		}
+	</ul>
+}
