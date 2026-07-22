@@ -1,16 +1,24 @@
 import { Component, computed, inject, input, signal } from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
 import { RouterLink } from '@angular/router'
-import { Line } from '@/shared/models/line.model'
 import { CarrisService } from '@core/services/carris.service'
-import { debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs'
+import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
+import {
+	debounceTime,
+	distinctUntilChanged,
+	map,
+	Observable,
+	of,
+	startWith,
+	switchMap,
+} from 'rxjs'
+import { Line } from '@/shared/models/line.model'
+import { LineGroup, LinesState } from './line.interface'
 
 const DEBOUNCE_MS = 300
 
-interface LineGroup {
-	color: string
-	lines: Line[]
-}
+const NOT_LOADING_EMPTY: LinesState = { loading: false, lines: [] }
+const LOADING: LinesState = { loading: true, lines: [] }
 
 function compareShortName(a: string, b: string): number {
 	const numericA = Number(a)
@@ -23,7 +31,7 @@ function compareShortName(a: string, b: string): number {
 
 @Component({
 	selector: 'app-line-search',
-	imports: [RouterLink],
+	imports: [RouterLink, HlmSkeleton],
 	templateUrl: './line-search.html',
 })
 export class LineSearch {
@@ -34,21 +42,28 @@ export class LineSearch {
 	readonly query = signal('')
 	readonly selectedLineId = signal<string | null>(null)
 
-	readonly lines = toSignal(
+	private readonly state = toSignal(
 		toObservable(this.query).pipe(
 			debounceTime(DEBOUNCE_MS),
 			distinctUntilChanged(),
-			switchMap((query) => {
-				if (query.trim().length > 0) {
-					return this.carrisService.searchLines(query)
+			switchMap((query): Observable<LinesState> => {
+				const shouldSearch =
+					query.trim().length > 0 || this.showAllOnEmptyQuery()
+				if (!shouldSearch) {
+					return of(NOT_LOADING_EMPTY)
 				}
-				return this.showAllOnEmptyQuery()
-					? this.carrisService.searchLines('')
-					: of<Line[]>([])
+
+				return this.carrisService.searchLines(query).pipe(
+					map((lines): LinesState => ({ loading: false, lines })),
+					startWith(LOADING),
+				)
 			}),
 		),
-		{ initialValue: [] as Line[] },
+		{ initialValue: LOADING },
 	)
+
+	readonly loading = computed(() => this.state().loading)
+	readonly lines = computed(() => this.state().lines)
 
 	readonly groupedLines = computed((): LineGroup[] => {
 		const byColor = new Map<string, Line[]>()
@@ -61,10 +76,15 @@ export class LineSearch {
 			}
 		}
 
-		const groups = Array.from(byColor, ([color, lines]): LineGroup => ({
-			color,
-			lines: [...lines].sort((a, b) => compareShortName(a.shortName, b.shortName)),
-		}))
+		const groups = Array.from(
+			byColor,
+			([color, lines]): LineGroup => ({
+				color,
+				lines: [...lines].sort((a, b) =>
+					compareShortName(a.shortName, b.shortName),
+				),
+			}),
+		)
 
 		return groups.sort((a, b) =>
 			compareShortName(a.lines[0].shortName, b.lines[0].shortName),
@@ -76,6 +96,8 @@ export class LineSearch {
 	}
 
 	toggleLine(lineId: string): void {
-		this.selectedLineId.update((current) => (current === lineId ? null : lineId))
+		this.selectedLineId.update((current) =>
+			current === lineId ? null : lineId,
+		)
 	}
 }

@@ -5,16 +5,26 @@
 	(input)="onQueryChange($any($event.target).value)"
 />
 
-<ul>
-	@for (stop of stops(); track stop.id) {
-		<li>
-			<button type="button" (click)="toggleStop(stop.id)">
-				{{ stop.name }}
-			</button>
+@if (loading()) {
+	<ul aria-busy="true" aria-label="A carregar paragens..." class="flex flex-col gap-2">
+		@for (i of [1, 2, 3, 4, 5]; track i) {
+			<li>
+				<div hlmSkeleton class="h-9 w-full"></div>
+			</li>
+		}
+	</ul>
+} @else {
+	<ul>
+		@for (stop of stops(); track stop.id) {
+			<li>
+				<button type="button" (click)="toggleStop(stop.id)">
+					{{ stop.name }}
+				</button>
 
-			@if (selectedStopId() === stop.id) {
-				<app-stop-arrivals-list [stopId]="stop.id" />
-			}
-		</li>
-	}
-</ul>
+				@if (selectedStopId() === stop.id) {
+					<app-stop-arrivals-list [stopId]="stop.id" />
+				}
+			</li>
+		}
+	</ul>
+}

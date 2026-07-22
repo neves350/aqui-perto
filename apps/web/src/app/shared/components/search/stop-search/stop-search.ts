@@ -1,15 +1,36 @@
-import { Component, inject, input, signal } from '@angular/core'
+import { Component, computed, inject, input, signal } from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
+import { CarrisService } from '@core/services/carris.service'
+import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
+import {
+	debounceTime,
+	distinctUntilChanged,
+	map,
+	Observable,
+	of,
+	startWith,
+	switchMap,
+} from 'rxjs'
 import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-arrivals-list'
 import { Stop } from '@/shared/models/stop.model'
-import { CarrisService } from '@core/services/carris.service'
-import { debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs'
 
 const DEBOUNCE_MS = 300
 
+interface StopsState {
+	loading: boolean
+	stops: Stop[]
+}
+
+const NOT_LOADING_EMPTY: StopsState = { loading: false, stops: [] }
+const LOADING: StopsState = { loading: true, stops: [] }
+
+function sortByName(stops: Stop[]): Stop[] {
+	return [...stops].sort((a, b) => a.name.localeCompare(b.name))
+}
+
 @Component({
 	selector: 'app-stop-search',
-	imports: [StopArrivalsList],
+	imports: [StopArrivalsList, HlmSkeleton],
 	templateUrl: './stop-search.html',
 })
 export class StopSearch {
@@ -20,28 +41,41 @@ export class StopSearch {
 	readonly query = signal('')
 	readonly selectedStopId = signal<string | null>(null)
 
-	readonly stops = toSignal(
+	private readonly state = toSignal(
 		toObservable(this.query).pipe(
 			debounceTime(DEBOUNCE_MS),
 			distinctUntilChanged(),
-			switchMap((query) => {
-				if (query.trim().length > 0) {
-					return this.carrisService.searchStops(query)
+			switchMap((query): Observable<StopsState> => {
+				const shouldSearch =
+					query.trim().length > 0 || this.showAllOnEmptyQuery()
+				if (!shouldSearch) {
+					return of(NOT_LOADING_EMPTY)
 				}
-				return this.showAllOnEmptyQuery()
-					? this.carrisService.searchStops('')
-					: of<Stop[]>([])
+
+				return this.carrisService.searchStops(query).pipe(
+					map(
+						(stops): StopsState => ({
+							loading: false,
+							stops: sortByName(stops),
+						}),
+					),
+					startWith(LOADING),
+				)
 			}),
-			map((stops) => [...stops].sort((a, b) => a.name.localeCompare(b.name))),
 		),
-		{ initialValue: [] as Stop[] },
+		{ initialValue: LOADING },
 	)
+
+	readonly loading = computed(() => this.state().loading)
+	readonly stops = computed(() => this.state().stops)
 
 	onQueryChange(value: string): void {
 		this.query.set(value)
 	}
 
 	toggleStop(stopId: string): void {
-		this.selectedStopId.update((current) => (current === stopId ? null : stopId))
+		this.selectedStopId.update((current) =>
+			current === stopId ? null : stopId,
+		)
 	}
 }

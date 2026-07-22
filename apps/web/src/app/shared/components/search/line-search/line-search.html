@@ -5,18 +5,28 @@
 	(input)="onQueryChange($any($event.target).value)"
 />
 
-@for (group of groupedLines(); track group.color) {
-	<ul>
-		@for (line of group.lines; track line.id) {
+@if (loading()) {
+	<ul aria-busy="true" aria-label="A carregar linhas..." class="flex flex-col gap-2">
+		@for (i of [1, 2, 3, 4, 5]; track i) {
 			<li>
-				<button type="button" (click)="toggleLine(line.id)">
-					{{ line.shortName }} — {{ line.longName }}
-				</button>
-
-				@if (selectedLineId() === line.id) {
-					<a [routerLink]="['/lines', line.id]">Ver percurso completo ›</a>
-				}
+				<div hlmSkeleton class="h-9 w-full"></div>
 			</li>
 		}
 	</ul>
+} @else {
+	@for (group of groupedLines(); track group.color) {
+		<ul>
+			@for (line of group.lines; track line.id) {
+				<li>
+					<button type="button" (click)="toggleLine(line.id)">
+						{{ line.shortName }} — {{ line.longName }}
+					</button>
+
+					@if (selectedLineId() === line.id) {
+						<a [routerLink]="['/lines', line.id]">Ver percurso completo ›</a>
+					}
+				</li>
+			}
+		</ul>
+	}
 }

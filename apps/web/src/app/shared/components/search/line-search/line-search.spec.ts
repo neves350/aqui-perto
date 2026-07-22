@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser'
 import { provideRouter } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
 import { carrisServiceMock } from '@core/testing/mocks'
-import { of } from 'rxjs'
+import { of, Subject } from 'rxjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LineSearch } from './line-search'
 
@@ -66,6 +66,87 @@ describe('LineSearch', () => {
 				textColor: '#FFFFFF',
 			},
 		])
+	})
+
+	it('exposes loading while the search is in flight, then false once it resolves', () => {
+		vi.useFakeTimers()
+		const results = new Subject<
+			{
+				id: string
+				shortName: string
+				longName: string
+				color: string
+				textColor: string
+			}[]
+		>()
+		carrisServiceMock.searchLines.mockReturnValue(results)
+
+		fixture = TestBed.createComponent(LineSearch)
+		component = fixture.componentInstance
+		fixture.detectChanges()
+
+		component.onQueryChange('758')
+		vi.advanceTimersByTime(300)
+		fixture.detectChanges()
+
+		expect(component.loading()).toBe(true)
+		expect(component.lines()).toEqual([])
+
+		results.next([
+			{
+				id: '4200_0',
+				shortName: '758',
+				longName: 'Alameda - Odivelas',
+				color: '#FF0000',
+				textColor: '#FFFFFF',
+			},
+		])
+		fixture.detectChanges()
+
+		expect(component.loading()).toBe(false)
+	})
+
+	it('renders skeleton placeholders while loading, and the results once resolved', () => {
+		vi.useFakeTimers()
+		const results = new Subject<
+			{
+				id: string
+				shortName: string
+				longName: string
+				color: string
+				textColor: string
+			}[]
+		>()
+		carrisServiceMock.searchLines.mockReturnValue(results)
+
+		fixture = TestBed.createComponent(LineSearch)
+		fixture.detectChanges()
+
+		fixture.componentInstance.onQueryChange('758')
+		vi.advanceTimersByTime(300)
+		fixture.detectChanges()
+
+		expect(
+			fixture.debugElement.queryAll(By.css('[hlmSkeleton]')).length,
+		).toBeGreaterThan(0)
+
+		results.next([
+			{
+				id: '4200_0',
+				shortName: '758',
+				longName: 'Alameda - Odivelas',
+				color: '#FF0000',
+				textColor: '#FFFFFF',
+			},
+		])
+		fixture.detectChanges()
+
+		expect(fixture.debugElement.queryAll(By.css('[hlmSkeleton]'))).toHaveLength(
+			0,
+		)
+		expect(
+			fixture.debugElement.query(By.css('button')).nativeElement.textContent,
+		).toContain('758')
 	})
 
 	it('searches lines once after the debounce window', () => {
