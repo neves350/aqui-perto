@@ -1,39 +1,35 @@
-<div class="discovery">
-	<div class="discovery__map">
-		<app-map
-			[center]="center()"
-			[markers]="markers()"
-			[userPosition]="userPosition()"
-			(mapClick)="onMapClick($event)"
-		/>
+<div class="flex flex-col h-dvh content-width">
+	<div class="h-[50%]">
+		<app-map [center]="center()" [markers]="markers()" [userPosition]="userPosition()"
+			(mapClick)="onMapClick($event)" />
 	</div>
 
-	<div class="discovery__panel">
+	<div class="flex-1 overflow-y-auto p-4">
 		@if (loading()) {
-			<p>A localizar...</p>
+		<p>A localizar...</p>
 		}
 
 		@if (geolocationError()) {
-			<p>
-				Não foi possível obter a tua localização. Escolhe um ponto no mapa
-				para veres as paragens próximas.
-			</p>
+		<p>
+			Não foi possível obter a tua localização. Escolhe um ponto no mapa
+			para veres as paragens próximas.
+		</p>
 		}
 
 		@if (!loading()) {
-			<ul>
-				@for (stop of stops(); track stop.id) {
-					<li>
-						<button type="button" (click)="selectStop(stop.id)">
-							{{ stop.name }}
-						</button>
+		<ul>
+			@for (stop of stops(); track stop.id) {
+			<li>
+				<button type="button" (click)="selectStop(stop.id)">
+					{{ stop.name }}
+				</button>
 
-						@if (selectedStopId() === stop.id) {
-							<app-stop-arrivals-list [stopId]="stop.id" />
-						}
-					</li>
+				@if (selectedStopId() === stop.id) {
+				<app-stop-arrivals-list [stopId]="stop.id" />
 				}
-			</ul>
+			</li>
+			}
+		</ul>
 		}
 	</div>
 </div>

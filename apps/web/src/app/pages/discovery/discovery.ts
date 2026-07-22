@@ -41,23 +41,6 @@ const INITIAL_STATE: DiscoveryState = {
 	selector: 'app-discovery',
 	imports: [MapComponent, StopArrivalsList],
 	templateUrl: './discovery.html',
-	styles: `
-		.discovery {
-			display: flex;
-			flex-direction: column;
-			height: 100dvh;
-		}
-
-		.discovery__map {
-			height: 50%;
-		}
-
-		.discovery__panel {
-			flex: 1;
-			overflow-y: auto;
-			padding: 1rem;
-		}
-	`,
 })
 export class Discovery {
 	private readonly carrisService = inject(CarrisService)

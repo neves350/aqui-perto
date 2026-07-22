@@ -1,62 +1,65 @@
-@if (loading()) {
-<div class="flex h-dvh items-center justify-center">
-	<hlm-spinner class="size-8" aria-label="A carregar percurso..." />
-</div>
-} @else if (route(); as line) {
-<div class="flex h-dvh flex-col">
-	<header class="flex items-center gap-3 p-4">
-		<a routerLink="/" hlmBtn variant="ghost" size="sm">
-			<svg lucideArrowLeft class="size-4"></svg>
-			Voltar
-		</a>
-		<span class="inline-flex items-center justify-center rounded px-2 py-1 text-sm font-bold"
-			[style.background]="line.color" [style.color]="line.textColor">
-			{{ line.shortName }}
-		</span>
-		<h1>{{ directionalLongName() }}</h1>
-	</header>
-
-	@if (line.directions.length > 1) {
-	<div class="flex gap-2 px-4 pb-4">
-		@for (dir of line.directions; track dir.directionId) {
-		<button type="button" hlmBtn size="sm" [variant]="dir.directionId === line.directionId ? 'default' : 'outline'"
-			[attr.aria-pressed]="dir.directionId === line.directionId" (click)="selectDirection(dir.directionId)">
-			{{ dir.headsign }}
-		</button>
-		}
+<div class="content-width">
+	@if (loading()) {
+	<div class="flex h-dvh items-center justify-center">
+		<hlm-spinner class="size-8" aria-label="A carregar percurso..." />
 	</div>
-	}
+	} @else if (route(); as line) {
+	<div class="flex h-dvh flex-col">
+		<header class="flex items-center gap-3 p-4">
+			<a routerLink="/" hlmBtn variant="ghost" size="sm">
+				<svg lucideArrowLeft class="size-4"></svg>
+				Voltar
+			</a>
+			<span class="inline-flex items-center justify-center rounded px-2 py-1 text-sm font-bold"
+				[style.background]="line.color" [style.color]="line.textColor">
+				{{ line.shortName }}
+			</span>
+			<h1>{{ directionalLongName() }}</h1>
+		</header>
 
-	<div class="h-[40%]">
-		<app-map [center]="center()" [route]="mapRoute()" [routeStops]="mapStops()" />
-	</div>
-
-	<h2>Paragens do percurso</h2>
-	<ul class="m-0 flex-1 list-none overflow-y-auto p-4">
-		@for (stop of line.stops; track stop.stopId) {
-		<li>
-			<button type="button" hlmBtn variant="ghost" class="h-auto w-full justify-between px-3 py-2 text-left"
-				[attr.aria-expanded]="selectedStopId() === stop.stopId" [attr.aria-controls]="'stop-arrivals-' + stop.stopId"
-				(click)="selectStop(stop.stopId)">
-				<span>{{ stop.sequence }}. {{ stop.name }}</span>
-				@if (stop.minutesUntilArrival !== null && stop.minutesUntilArrival <= 30) { <span>{{ stop.minutesUntilArrival }}
-					min · {{ stop.scheduledArrival }}</span>
-					} @else if (stop.scheduledArrival !== null) {
-					<span>{{ stop.scheduledArrival }}</span>
-					} @else {
-					<span>Sem horário previsto</span>
-					}
+		@if (line.directions.length > 1) {
+		<div class="flex gap-2 px-4 pb-4">
+			@for (dir of line.directions; track dir.directionId) {
+			<button type="button" hlmBtn size="sm" [variant]="dir.directionId === line.directionId ? 'default' : 'outline'"
+				[attr.aria-pressed]="dir.directionId === line.directionId" (click)="selectDirection(dir.directionId)">
+				{{ dir.headsign }}
 			</button>
-
-			@if (selectedStopId() === stop.stopId) {
-			<div [id]="'stop-arrivals-' + stop.stopId" aria-live="polite">
-				<app-stop-arrivals-list [stopId]="stop.stopId" [lineId]="line.id" />
-			</div>
 			}
-		</li>
+		</div>
 		}
-	</ul>
+
+		<div class="h-[40%]">
+			<app-map [center]="center()" [route]="mapRoute()" [routeStops]="mapStops()" />
+		</div>
+
+		<h2>Paragens do percurso</h2>
+		<ul class="m-0 flex-1 list-none overflow-y-auto p-4">
+			@for (stop of line.stops; track stop.stopId) {
+			<li>
+				<button type="button" hlmBtn variant="ghost" class="h-auto w-full justify-between px-3 py-2 text-left"
+					[attr.aria-expanded]="selectedStopId() === stop.stopId" [attr.aria-controls]="'stop-arrivals-' + stop.stopId"
+					(click)="selectStop(stop.stopId)">
+					<span>{{ stop.sequence }}. {{ stop.name }}</span>
+					@if (stop.minutesUntilArrival !== null && stop.minutesUntilArrival <= 30) { <span>{{ stop.minutesUntilArrival
+						}}
+						min · {{ stop.scheduledArrival }}</span>
+						} @else if (stop.scheduledArrival !== null) {
+						<span>{{ stop.scheduledArrival }}</span>
+						} @else {
+						<span>Sem horário previsto</span>
+						}
+				</button>
+
+				@if (selectedStopId() === stop.stopId) {
+				<div [id]="'stop-arrivals-' + stop.stopId" aria-live="polite">
+					<app-stop-arrivals-list [stopId]="stop.stopId" [lineId]="line.id" />
+				</div>
+				}
+			</li>
+			}
+		</ul>
+	</div>
+	} @else {
+	<p>Não foi possível carregar o percurso desta linha.</p>
+	}
 </div>
-} @else {
-<p>Não foi possível carregar o percurso desta linha.</p>
-}
