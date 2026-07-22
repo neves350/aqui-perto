@@ -1,0 +1,62 @@
+<header class="pointer-events-none fixed inset-x-0 top-4 z-50">
+  <div class="content-width">
+    <div
+      class="pointer-events-auto mx-auto flex w-full max-w-5xl items-center justify-between rounded-xl border border-border bg-background-navbar px-2.5 py-1.5 backdrop-blur-md">
+      <a routerLink="/" class="inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-xs text-foreground">
+        <img src="image.png" class="size-8">
+        <span class="font-sans font-semibold uppercase text-sm tracking-wider">
+          Aqui
+          <span class="text-primary">Perto</span>
+        </span>
+      </a>
+
+      <div class="hidden items-center gap-0.5 md:flex">
+        <a routerLink="/" routerLinkActive [routerLinkActiveOptions]="{ exact: true }" #discoveryLink="routerLinkActive"
+          [class]="discoveryLink.isActive
+            ? 'rounded-md px-3 py-1.5 font-sans text-xs uppercase tracking-wider transition hover:text-foreground bg-muted/60 text-foreground'
+            : 'rounded-md px-3 py-1.5 font-sans text-xs cursor-pointer uppercase tracking-wider text-muted-foreground transition hover:text-foreground'">
+          Inicio
+        </a>
+        <a routerLink="/search" routerLinkActive #searchLink="routerLinkActive"
+          [class]="searchLink.isActive
+            ? 'rounded-md px-3 py-1.5 font-sans text-xs uppercase tracking-wider transition hover:text-foreground bg-muted/60 text-foreground'
+            : 'rounded-md px-3 py-1.5 font-sans text-xs cursor-pointer uppercase tracking-wider text-muted-foreground transition hover:text-foreground'">
+          Procurar
+        </a>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <button (click)="toggleTheme()" hlmBtn size="icon" variant="ghost" class="cursor-pointer"
+          aria-label="Toggle theme">
+          <svg [lucideIcon]="icon()" class="size-4"></svg>
+        </button>
+        <hlm-sheet side="right">
+          <button hlmSheetTrigger class="cursor-pointer md:hidden" hlmBtn size="icon" variant="ghost"
+            aria-label="Open menu">
+            <svg lucideMenu class="size-4"></svg>
+          </button>
+          <hlm-sheet-content *hlmSheetPortal="let ctx">
+            <hlm-sheet-header>
+              <h3 hlmSheetTitle>Menu</h3>
+            </hlm-sheet-header>
+            <nav class="flex flex-col gap-2 p-4">
+              <a routerLink="/" routerLinkActive [routerLinkActiveOptions]="{ exact: true }"
+                #mobileDiscoveryLink="routerLinkActive" (click)="closeMobileMenu()"
+                [class]="mobileDiscoveryLink.isActive
+                  ? 'rounded-md px-3 py-2 font-sans text-xs uppercase tracking-wider text-foreground bg-muted/60 transition hover:bg-accent hover:text-foreground border border-border'
+                  : 'rounded-md px-3 py-2 font-sans text-xs uppercase tracking-wider text-foreground bg-links-sheet transition hover:bg-accent hover:text-foreground cursor-pointer border border-border'">
+                Inicio
+              </a>
+              <a routerLink="/search" routerLinkActive #mobileSearchLink="routerLinkActive" (click)="closeMobileMenu()"
+                [class]="mobileSearchLink.isActive
+                  ? 'rounded-md px-3 py-2 font-sans text-xs uppercase tracking-wider text-foreground bg-muted/60 transition hover:bg-accent hover:text-foreground border border-border'
+                  : 'rounded-md px-3 py-2 font-sans text-xs uppercase tracking-wider text-foreground bg-links-sheet transition hover:bg-accent hover:text-foreground cursor-pointer border border-border'">
+                Procurar
+              </a>
+            </nav>
+          </hlm-sheet-content>
+        </hlm-sheet>
+      </div>
+    </div>
+  </div>
+</header>
