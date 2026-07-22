@@ -49,6 +49,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 	markers = input<MapMarker[]>([])
 	userPosition = input<MapCenter | null>(null)
 	route = input<MapCenter[]>([])
+	routeStops = input<MapCenter[]>([])
 	mapClick = output<MapCenter>()
 
 	private readonly mapContainer =
@@ -58,6 +59,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 	private userMarkerInstance?: Marker
 	private routeMarkerInstances: Marker[] = []
 	private routeSourceAdded = false
+	private routeBoundsFitted = false
 	private mapLoaded = false
 
 	constructor() {
@@ -78,7 +80,12 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
 		effect(() => {
 			const route = this.route()
-			if (this.mapLoaded) this.renderRoute(route)
+			if (this.mapLoaded) this.renderRouteLine(route)
+		})
+
+		effect(() => {
+			const routeStops = this.routeStops()
+			if (this.mapLoaded) this.renderRouteMarkers(routeStops)
 		})
 	}
 
@@ -97,7 +104,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
 		this.map.on('load', () => {
 			this.mapLoaded = true
-			this.renderRoute(this.route())
+			this.renderRouteLine(this.route())
+			this.renderRouteMarkers(this.routeStops())
 		})
 
 		this.renderMarkers(this.markers())
@@ -124,11 +132,6 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 			: undefined
 	}
 
-	private renderRoute(route: MapCenter[]): void {
-		this.renderRouteLine(route)
-		this.renderRouteMarkers(route)
-	}
-
 	private renderRouteLine(route: MapCenter[]): void {
 		const map = this.map!
 		const data = {
@@ -145,41 +148,54 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
 		if (this.routeSourceAdded) {
 			;(map.getSource(ROUTE_SOURCE_ID) as GeoJSONSource).setData(data)
-			return
+		} else if (route.length > 0) {
+			map.addSource(ROUTE_SOURCE_ID, { type: 'geojson', data })
+			map.addLayer({
+				id: ROUTE_LAYER_ID,
+				type: 'line',
+				source: ROUTE_SOURCE_ID,
+				layout: { 'line-join': 'round', 'line-cap': 'round' },
+				paint: { 'line-color': ROUTE_LINE_COLOR, 'line-width': 4 },
+			})
+			this.routeSourceAdded = true
 		}
 
-		if (route.length === 0) return
+		this.fitRouteBoundsIfNeeded()
+	}
 
-		map.addSource(ROUTE_SOURCE_ID, { type: 'geojson', data })
-		map.addLayer({
-			id: ROUTE_LAYER_ID,
-			type: 'line',
-			source: ROUTE_SOURCE_ID,
-			layout: { 'line-join': 'round', 'line-cap': 'round' },
-			paint: { 'line-color': ROUTE_LINE_COLOR, 'line-width': 4 },
+	private renderRouteMarkers(routeStops: MapCenter[]): void {
+		this.routeMarkerInstances.forEach((marker) => {
+			marker.remove()
 		})
-		this.routeSourceAdded = true
+		this.routeMarkerInstances = routeStops.map((point, index) =>
+			new Marker({ element: this.createRouteStopElement(index + 1) })
+				.setLngLat([point.lon, point.lat])
+				.addTo(this.map!),
+		)
 
-		const lons = route.map((point) => point.lon)
-		const lats = route.map((point) => point.lat)
-		map.fitBounds(
+		this.fitRouteBoundsIfNeeded()
+	}
+
+	// Fits once and never again, so this assumes `route` and `routeStops` settle
+	// together on first load (true for all current callers) — if a future caller
+	// streams one independently of the other, the bounds could go stale.
+	private fitRouteBoundsIfNeeded(): void {
+		if (this.routeBoundsFitted) return
+
+		const route = this.route()
+		const points = route.length > 0 ? route : this.routeStops()
+		if (points.length === 0) return
+
+		const lons = points.map((point) => point.lon)
+		const lats = points.map((point) => point.lat)
+		this.map!.fitBounds(
 			[
 				[Math.min(...lons), Math.min(...lats)],
 				[Math.max(...lons), Math.max(...lats)],
 			],
 			{ padding: 40, duration: 0 },
 		)
-	}
-
-	private renderRouteMarkers(route: MapCenter[]): void {
-		this.routeMarkerInstances.forEach((marker) => {
-			marker.remove()
-		})
-		this.routeMarkerInstances = route.map((point, index) =>
-			new Marker({ element: this.createRouteStopElement(index + 1) })
-				.setLngLat([point.lon, point.lat])
-				.addTo(this.map!),
-		)
+		this.routeBoundsFitted = true
 	}
 
 	private createRouteStopElement(sequence: number): HTMLElement {

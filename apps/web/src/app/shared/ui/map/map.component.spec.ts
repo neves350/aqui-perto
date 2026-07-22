@@ -172,11 +172,16 @@ describe('MapComponent', () => {
 			expect(mapInstance.fitBounds).toHaveBeenCalledTimes(1)
 		})
 
-		it('renders a numbered marker with a custom element for each route stop', async () => {
+		it('renders a numbered marker per routeStops entry, independent of the route line points', async () => {
 			const { Marker: MockMarker } = await import('maplibre-gl')
 			const fixture = TestBed.createComponent(MapComponent)
 			fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
 			fixture.componentRef.setInput('route', [
+				{ lat: 38.72, lon: -9.14 },
+				{ lat: 38.725, lon: -9.145 },
+				{ lat: 38.73, lon: -9.15 },
+			])
+			fixture.componentRef.setInput('routeStops', [
 				{ lat: 38.72, lon: -9.14 },
 				{ lat: 38.73, lon: -9.15 },
 			])
@@ -195,6 +200,60 @@ describe('MapComponent', () => {
 					(options?.element as HTMLElement | undefined)?.textContent,
 			)
 			expect(numbers).toEqual(['1', '2'])
+		})
+
+		it('renders no route stop markers when routeStops is empty, even with a dense route line', () => {
+			const fixture = TestBed.createComponent(MapComponent)
+			fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
+			fixture.componentRef.setInput('route', [
+				{ lat: 38.72, lon: -9.14 },
+				{ lat: 38.725, lon: -9.145 },
+				{ lat: 38.73, lon: -9.15 },
+			])
+			fixture.detectChanges()
+
+			triggerMapLoad()
+
+			expect(markerInstance.setLngLat).not.toHaveBeenCalled()
+		})
+
+		it('falls back to fitting the map view to routeStops bounds when the route line is empty', () => {
+			const fixture = TestBed.createComponent(MapComponent)
+			fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
+			fixture.componentRef.setInput('routeStops', [
+				{ lat: 38.72, lon: -9.14 },
+				{ lat: 38.8, lon: -9.2 },
+			])
+			fixture.detectChanges()
+
+			triggerMapLoad()
+
+			expect(mapInstance.fitBounds).toHaveBeenCalledWith(
+				[
+					[-9.2, 38.72],
+					[-9.14, 38.8],
+				],
+				expect.objectContaining({ duration: 0 }),
+			)
+		})
+
+		it('updates the route stop markers when routeStops changes after load', () => {
+			const fixture = TestBed.createComponent(MapComponent)
+			fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
+			fixture.componentRef.setInput('routeStops', [
+				{ lat: 38.72, lon: -9.14 },
+			])
+			fixture.detectChanges()
+
+			triggerMapLoad()
+
+			fixture.componentRef.setInput('routeStops', [
+				{ lat: 38.74, lon: -9.16 },
+			])
+			fixture.detectChanges()
+
+			expect(markerInstance.remove).toHaveBeenCalled()
+			expect(markerInstance.setLngLat).toHaveBeenCalledWith([-9.16, 38.74])
 		})
 
 		it('updates the route line data when the route input changes after load', () => {
