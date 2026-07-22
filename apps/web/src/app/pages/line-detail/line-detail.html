@@ -33,7 +33,11 @@
 		}
 
 		<div class="line-detail__map">
-			<app-map [center]="center()" [route]="mapRoute()" />
+			<app-map
+				[center]="center()"
+				[route]="mapRoute()"
+				[routeStops]="mapStops()"
+			/>
 		</div>
 
 		<h2>Paragens do percurso</h2>

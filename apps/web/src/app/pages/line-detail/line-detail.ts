@@ -60,13 +60,18 @@ export class LineDetail {
 		return line ? getDirectionalLongName(line.longName, line.headsign) : ''
 	})
 
-	readonly mapRoute = computed(() =>
+	readonly mapStops = computed(() =>
 		(this.route()?.stops ?? []).map(
 			(stop): MapCenter => ({ lat: stop.lat, lon: stop.lon }),
 		),
 	)
 
-	readonly center = computed(() => this.mapRoute()[0] ?? DEFAULT_CENTER)
+	readonly mapRoute = computed(() => {
+		const shape = this.route()?.shape ?? []
+		return shape.length > 0 ? shape : this.mapStops()
+	})
+
+	readonly center = computed(() => this.mapStops()[0] ?? DEFAULT_CENTER)
 
 	readonly selectedStopId = signal<string | null>(null)
 

@@ -4,6 +4,7 @@ import { provideRouter, Router } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
 import { carrisServiceMock } from '@core/testing/mocks'
 import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-arrivals-list'
+import { MapComponent } from '@/shared/ui/map/map.component'
 import { of, throwError } from 'rxjs'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LineDetail } from './line-detail'
@@ -51,6 +52,7 @@ const LINE_ROUTE = {
 			scheduledArrival: null,
 		},
 	],
+	shape: [],
 }
 
 describe('LineDetail', () => {
@@ -121,7 +123,7 @@ describe('LineDetail', () => {
 		expect(heading.nativeElement.textContent.trim()).toBe('Alameda - Odivelas')
 	})
 
-	it('passes the ordered stop coordinates to the map as the route and centers on the first stop', () => {
+	it('falls back to the stop coordinates for mapRoute when shape is empty, and centers on the first stop', () => {
 		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
 
 		fixture = TestBed.createComponent(LineDetail)
@@ -133,6 +135,87 @@ describe('LineDetail', () => {
 			{ lat: 38.736, lon: -9.136 },
 			{ lat: 38.791, lon: -9.183 },
 		])
+		expect(MockMap).toHaveBeenCalledWith(
+			expect.objectContaining({ center: [-9.136, 38.736] }),
+		)
+	})
+
+	it('uses the shape geometry for mapRoute when present, independent of the stops', () => {
+		carrisServiceMock.getLineRoute.mockReturnValue(
+			of({
+				...LINE_ROUTE,
+				shape: [
+					{ lat: 38.7, lon: -9.1 },
+					{ lat: 38.75, lon: -9.15 },
+					{ lat: 38.791, lon: -9.183 },
+				],
+			}),
+		)
+
+		fixture = TestBed.createComponent(LineDetail)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('id', '4200_0')
+		fixture.detectChanges()
+
+		expect(component.mapRoute()).toEqual([
+			{ lat: 38.7, lon: -9.1 },
+			{ lat: 38.75, lon: -9.15 },
+			{ lat: 38.791, lon: -9.183 },
+		])
+	})
+
+	it('always exposes mapStops as the stop coordinates, regardless of shape', () => {
+		carrisServiceMock.getLineRoute.mockReturnValue(
+			of({
+				...LINE_ROUTE,
+				shape: [
+					{ lat: 38.7, lon: -9.1 },
+					{ lat: 38.75, lon: -9.15 },
+				],
+			}),
+		)
+
+		fixture = TestBed.createComponent(LineDetail)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('id', '4200_0')
+		fixture.detectChanges()
+
+		expect(component.mapStops()).toEqual([
+			{ lat: 38.736, lon: -9.136 },
+			{ lat: 38.791, lon: -9.183 },
+		])
+	})
+
+	it('passes mapRoute and mapStops to app-map as route and routeStops', () => {
+		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+
+		fixture = TestBed.createComponent(LineDetail)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('id', '4200_0')
+		fixture.detectChanges()
+
+		const map = fixture.debugElement.query(By.directive(MapComponent))
+
+		expect(map.componentInstance.route()).toEqual(component.mapRoute())
+		expect(map.componentInstance.routeStops()).toEqual(component.mapStops())
+	})
+
+	it('centers on the first stop even when the shape geometry starts elsewhere', () => {
+		carrisServiceMock.getLineRoute.mockReturnValue(
+			of({
+				...LINE_ROUTE,
+				shape: [
+					{ lat: 38.7, lon: -9.1 },
+					{ lat: 38.791, lon: -9.183 },
+				],
+			}),
+		)
+
+		fixture = TestBed.createComponent(LineDetail)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('id', '4200_0')
+		fixture.detectChanges()
+
 		expect(MockMap).toHaveBeenCalledWith(
 			expect.objectContaining({ center: [-9.136, 38.736] }),
 		)
