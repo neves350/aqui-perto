@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { CarrisClientService } from 'src/integrations/carris/carris-client.service'
-import { LineDetailResponseDto, LineResponseDto } from './dto/line-response.dto'
+import {
+	LineDetailResponseDto,
+	LineResponseDto,
+	LineRouteResponseDto,
+} from './dto/line-response.dto'
 
 @Injectable()
 export class LinesService {
@@ -61,5 +65,75 @@ export class LinesService {
 					})),
 				})),
 		}
+	}
+
+	async getRouteDetail(id: string): Promise<LineRouteResponseDto | null> {
+		const line = await this.carrisClientService.getLineById(id)
+		if (!line) return null
+
+		const patternId = line.pattern_ids[0]
+		const pattern = patternId
+			? await this.carrisClientService.getPattern(patternId)
+			: null
+		if (!pattern) return null
+
+		const stops = await this.carrisClientService.getStops()
+		const stopById = new Map(stops.map((stop) => [stop.id, stop]))
+
+		const now = new Date()
+		const today = this.formatAsYyyymmdd(now)
+		const tripGroup =
+			pattern.trips.find((trip) => trip.valid_on.includes(today)) ?? null
+		const arrivalTimeByStopId = new Map(
+			(tripGroup?.schedule ?? []).map((entry) => [
+				entry.stop_id,
+				entry.arrival_time,
+			]),
+		)
+
+		return {
+			id: line.id,
+			shortName: line.short_name,
+			longName: line.long_name,
+			color: line.color,
+			textColor: line.text_color,
+			stops: [...pattern.path]
+				.sort((a, b) => a.stop_sequence - b.stop_sequence)
+				.map((pathStop) => {
+					const stop = stopById.get(pathStop.stop_id)
+					const arrivalTime = arrivalTimeByStopId.get(pathStop.stop_id) ?? null
+					const arrivalDate = arrivalTime
+						? this.toTodayDate(arrivalTime, now)
+						: null
+					const minutesUntilArrival =
+						arrivalDate && arrivalDate.getTime() >= now.getTime()
+							? Math.round((arrivalDate.getTime() - now.getTime()) / 60_000)
+							: null
+
+					return {
+						stopId: pathStop.stop_id,
+						name: stop?.long_name ?? '',
+						sequence: pathStop.stop_sequence,
+						lat: stop?.lat ?? 0,
+						lon: stop?.lon ?? 0,
+						minutesUntilArrival,
+						scheduledArrival: arrivalTime ? arrivalTime.slice(0, 5) : null,
+					}
+				}),
+		}
+	}
+
+	private formatAsYyyymmdd(date: Date): string {
+		const year = date.getFullYear()
+		const month = String(date.getMonth() + 1).padStart(2, '0')
+		const day = String(date.getDate()).padStart(2, '0')
+		return `${year}${month}${day}`
+	}
+
+	private toTodayDate(arrivalTime: string, reference: Date): Date {
+		const [hours, minutes, seconds] = arrivalTime.split(':').map(Number)
+		const date = new Date(reference)
+		date.setHours(hours, minutes, seconds, 0)
+		return date
 	}
 }

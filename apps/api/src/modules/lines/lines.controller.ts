@@ -20,6 +20,21 @@ export class LinesController {
 		return this.linesService.search(query.query)
 	}
 
+	@Get(':id/route')
+	@ApiOperation({
+		summary:
+			'Get the full route for a line: ordered stops with next scheduled arrival',
+	})
+	@ApiParam({ name: 'id', example: '4200_0' })
+	@ApiResponse({ status: 404, description: 'Line not found' })
+	async getRouteDetail(@Param('id') id: string) {
+		const route = await this.linesService.getRouteDetail(id)
+		if (!route) {
+			throw new NotFoundException(`Route for line ${id} not found`)
+		}
+		return route
+	}
+
 	@Get(':id')
 	@ApiOperation({
 		summary: 'Get a line by id, including its patterns and schedules',

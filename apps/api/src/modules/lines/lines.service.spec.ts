@@ -146,4 +146,181 @@ describe('LinesService', () => {
 			})
 		})
 	})
+
+	describe('getRouteDetail', () => {
+		afterEach(() => {
+			jest.useRealTimers()
+		})
+
+		it('returns null when the line does not exist', async () => {
+			mockCarris.getLineById.mockResolvedValue(null)
+
+			const result = await service.getRouteDetail('missing')
+
+			expect(result).toBeNull()
+		})
+
+		it('returns null when the line has no valid pattern', async () => {
+			mockCarris.getLineById.mockResolvedValue({
+				id: '4200_0',
+				short_name: '758',
+				long_name: 'Alameda - Odivelas',
+				color: '#FF0000',
+				text_color: '#FFFFFF',
+				route_ids: ['route1'],
+				pattern_ids: ['pattern1'],
+			})
+			mockCarris.getPattern.mockResolvedValue(null)
+
+			const result = await service.getRouteDetail('4200_0')
+
+			expect(result).toBeNull()
+		})
+
+		it('sets minutesUntilArrival and scheduledArrival to null when there is no arrival today', async () => {
+			jest.useFakeTimers().setSystemTime(new Date('2026-07-22T10:00:00'))
+
+			mockCarris.getLineById.mockResolvedValue({
+				id: '4200_0',
+				short_name: '758',
+				long_name: 'Alameda - Odivelas',
+				color: '#FF0000',
+				text_color: '#FFFFFF',
+				route_ids: ['route1'],
+				pattern_ids: ['pattern1'],
+			})
+			mockCarris.getPattern.mockResolvedValue({
+				id: 'pattern1',
+				line_id: '4200_0',
+				route_id: 'route1',
+				direction_id: 0,
+				headsign: 'Odivelas',
+				path: [{ stop_id: 'stopA', stop_sequence: 1, distance: 0 }],
+				trips: [
+					{
+						schedule: [
+							{ stop_id: 'stopA', stop_sequence: 1, arrival_time: '08:00:00' },
+						],
+						trip_ids: ['trip1'],
+						service_ids: ['service1'],
+						valid_on: ['20260721'],
+					},
+				],
+			})
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'stopA',
+					long_name: 'Alameda',
+					short_name: null,
+					lat: 38.736,
+					lon: -9.136,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+			])
+
+			const result = await service.getRouteDetail('4200_0')
+
+			expect(result?.stops).toEqual([
+				{
+					stopId: 'stopA',
+					name: 'Alameda',
+					sequence: 1,
+					lat: 38.736,
+					lon: -9.136,
+					minutesUntilArrival: null,
+					scheduledArrival: null,
+				},
+			])
+		})
+
+		it('returns the ordered stops with minutes/time until the next scheduled arrival', async () => {
+			jest.useFakeTimers().setSystemTime(new Date('2026-07-22T10:00:00'))
+
+			mockCarris.getLineById.mockResolvedValue({
+				id: '4200_0',
+				short_name: '758',
+				long_name: 'Alameda - Odivelas',
+				color: '#FF0000',
+				text_color: '#FFFFFF',
+				route_ids: ['route1'],
+				pattern_ids: ['pattern1'],
+			})
+			mockCarris.getPattern.mockResolvedValue({
+				id: 'pattern1',
+				line_id: '4200_0',
+				route_id: 'route1',
+				direction_id: 0,
+				headsign: 'Odivelas',
+				path: [
+					{ stop_id: 'stopB', stop_sequence: 2, distance: 100 },
+					{ stop_id: 'stopA', stop_sequence: 1, distance: 0 },
+				],
+				trips: [
+					{
+						schedule: [
+							{ stop_id: 'stopA', stop_sequence: 1, arrival_time: '10:05:00' },
+							{ stop_id: 'stopB', stop_sequence: 2, arrival_time: '10:15:00' },
+						],
+						trip_ids: ['trip1'],
+						service_ids: ['service1'],
+						valid_on: ['20260722'],
+					},
+				],
+			})
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'stopA',
+					long_name: 'Alameda',
+					short_name: null,
+					lat: 38.736,
+					lon: -9.136,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+				{
+					id: 'stopB',
+					long_name: 'Odivelas',
+					short_name: null,
+					lat: 38.791,
+					lon: -9.183,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+			])
+
+			const result = await service.getRouteDetail('4200_0')
+
+			expect(result).toEqual({
+				id: '4200_0',
+				shortName: '758',
+				longName: 'Alameda - Odivelas',
+				color: '#FF0000',
+				textColor: '#FFFFFF',
+				stops: [
+					{
+						stopId: 'stopA',
+						name: 'Alameda',
+						sequence: 1,
+						lat: 38.736,
+						lon: -9.136,
+						minutesUntilArrival: 5,
+						scheduledArrival: '10:05',
+					},
+					{
+						stopId: 'stopB',
+						name: 'Odivelas',
+						sequence: 2,
+						lat: 38.791,
+						lon: -9.183,
+						minutesUntilArrival: 15,
+						scheduledArrival: '10:15',
+					},
+				],
+			})
+		})
+	})
 })

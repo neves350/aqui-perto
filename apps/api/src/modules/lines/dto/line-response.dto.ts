@@ -33,3 +33,17 @@ export class LinePatternDto {
 export class LineDetailResponseDto extends LineResponseDto {
 	patterns!: LinePatternDto[]
 }
+
+export class LineRouteStopDto {
+	stopId!: string
+	name!: string
+	sequence!: number
+	lat!: number
+	lon!: number
+	minutesUntilArrival!: number | null
+	scheduledArrival!: string | null
+}
+
+export class LineRouteResponseDto extends LineResponseDto {
+	stops!: LineRouteStopDto[]
+}
