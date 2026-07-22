@@ -1,30 +1,26 @@
-<input
-	type="search"
-	placeholder="Pesquisar paragem por nome..."
-	[value]="query()"
-	(input)="onQueryChange($any($event.target).value)"
-/>
+<input hlmInput type="search" placeholder="Pesquisar paragem por nome..." [value]="query()"
+	(input)="onQueryChange($any($event.target).value)" class="mb-8" />
 
 @if (loading()) {
-	<ul aria-busy="true" aria-label="A carregar paragens..." class="flex flex-col gap-2">
-		@for (i of [1, 2, 3, 4, 5]; track i) {
-			<li>
-				<div hlmSkeleton class="h-9 w-full"></div>
-			</li>
-		}
-	</ul>
+<ul aria-busy="true" aria-label="A carregar paragens..." class="flex flex-col gap-2">
+	@for (i of [1, 2, 3, 4, 5]; track i) {
+	<li>
+		<div hlmSkeleton class="h-9 w-full"></div>
+	</li>
+	}
+</ul>
 } @else {
-	<ul>
-		@for (stop of stops(); track stop.id) {
-			<li>
-				<button type="button" (click)="toggleStop(stop.id)">
-					{{ stop.name }}
-				</button>
+<ul>
+	@for (stop of stops(); track stop.id) {
+	<li class="mb-1">
+		<button hlmBtn type="button" variant="ghost" class="cursor-pointer" (click)="toggleStop(stop.id)">
+			{{ stop.name }}
+		</button>
 
-				@if (selectedStopId() === stop.id) {
-					<app-stop-arrivals-list [stopId]="stop.id" />
-				}
-			</li>
+		@if (selectedStopId() === stop.id) {
+		<app-stop-arrivals-list [stopId]="stop.id" />
 		}
-	</ul>
+	</li>
+	}
+</ul>
 }

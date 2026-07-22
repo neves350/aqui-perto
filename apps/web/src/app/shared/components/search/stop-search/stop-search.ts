@@ -13,6 +13,8 @@ import {
 } from 'rxjs'
 import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-arrivals-list'
 import { Stop } from '@/shared/models/stop.model'
+import { HlmButton } from '@/shared/ui/button/src'
+import { HlmInput } from '@/shared/ui/input/src'
 
 const DEBOUNCE_MS = 300
 
@@ -30,7 +32,7 @@ function sortByName(stops: Stop[]): Stop[] {
 
 @Component({
 	selector: 'app-stop-search',
-	imports: [StopArrivalsList, HlmSkeleton],
+	imports: [StopArrivalsList, HlmSkeleton, HlmInput, HlmButton],
 	templateUrl: './stop-search.html',
 })
 export class StopSearch {
