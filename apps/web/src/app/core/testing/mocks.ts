@@ -1,9 +1,16 @@
 import { vi } from 'vitest'
 
+export const routeSourceInstance = {
+	setData: vi.fn(),
+}
+
 export const mapInstance = {
 	on: vi.fn(),
 	setCenter: vi.fn(),
 	remove: vi.fn(),
+	addSource: vi.fn(),
+	addLayer: vi.fn(),
+	getSource: vi.fn().mockReturnValue(routeSourceInstance),
 }
 
 export const markerInstance = {

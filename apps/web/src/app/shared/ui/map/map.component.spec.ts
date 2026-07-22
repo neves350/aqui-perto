@@ -1,7 +1,18 @@
 import { TestBed } from '@angular/core/testing'
-import { mapInstance, markerInstance } from '@core/testing/mocks'
+import {
+	mapInstance,
+	markerInstance,
+	routeSourceInstance,
+} from '@core/testing/mocks'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MapComponent } from './map.component'
+
+function triggerMapLoad() {
+	const loadHandler = mapInstance.on.mock.calls.find(
+		([event]) => event === 'load',
+	)?.[1]
+	loadHandler()
+}
 
 vi.mock('maplibre-gl', async () => {
 	const { mapInstance, markerInstance } = await import('@core/testing/mocks')
@@ -88,5 +99,105 @@ describe('MapComponent', () => {
 		clickHandler({ lngLat: { lat: 38.71, lng: -9.12 } })
 
 		expect(clicks).toEqual([{ lat: 38.71, lon: -9.12 }])
+	})
+
+	describe('route', () => {
+		it('does not draw a route line when none is provided', () => {
+			const fixture = TestBed.createComponent(MapComponent)
+			fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
+			fixture.detectChanges()
+
+			triggerMapLoad()
+
+			expect(mapInstance.addSource).not.toHaveBeenCalled()
+			expect(mapInstance.addLayer).not.toHaveBeenCalled()
+		})
+
+		it('draws a route line connecting the given points once the map is loaded', () => {
+			const fixture = TestBed.createComponent(MapComponent)
+			fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
+			fixture.componentRef.setInput('route', [
+				{ lat: 38.72, lon: -9.14 },
+				{ lat: 38.73, lon: -9.15 },
+			])
+			fixture.detectChanges()
+
+			triggerMapLoad()
+
+			expect(mapInstance.addSource).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({
+					type: 'geojson',
+					data: expect.objectContaining({
+						geometry: {
+							type: 'LineString',
+							coordinates: [
+								[-9.14, 38.72],
+								[-9.15, 38.73],
+							],
+						},
+					}),
+				}),
+			)
+			expect(mapInstance.addLayer).toHaveBeenCalledWith(
+				expect.objectContaining({ type: 'line' }),
+			)
+		})
+
+		it('renders a numbered marker with a custom element for each route stop', async () => {
+			const { Marker: MockMarker } = await import('maplibre-gl')
+			const fixture = TestBed.createComponent(MapComponent)
+			fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
+			fixture.componentRef.setInput('route', [
+				{ lat: 38.72, lon: -9.14 },
+				{ lat: 38.73, lon: -9.15 },
+			])
+			fixture.detectChanges()
+
+			triggerMapLoad()
+
+			expect(markerInstance.setLngLat).toHaveBeenCalledWith([-9.14, 38.72])
+			expect(markerInstance.setLngLat).toHaveBeenCalledWith([-9.15, 38.73])
+
+			const routeMarkerCalls = vi
+				.mocked(MockMarker)
+				.mock.calls.filter(([options]) => options?.element)
+			const numbers = routeMarkerCalls.map(
+				([options]) =>
+					(options?.element as HTMLElement | undefined)?.textContent,
+			)
+			expect(numbers).toEqual(['1', '2'])
+		})
+
+		it('updates the route line data when the route input changes after load', () => {
+			const fixture = TestBed.createComponent(MapComponent)
+			fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
+			fixture.componentRef.setInput('route', [
+				{ lat: 38.72, lon: -9.14 },
+				{ lat: 38.73, lon: -9.15 },
+			])
+			fixture.detectChanges()
+
+			triggerMapLoad()
+
+			fixture.componentRef.setInput('route', [
+				{ lat: 38.74, lon: -9.16 },
+				{ lat: 38.75, lon: -9.17 },
+			])
+			fixture.detectChanges()
+
+			expect(routeSourceInstance.setData).toHaveBeenCalledWith(
+				expect.objectContaining({
+					geometry: {
+						type: 'LineString',
+						coordinates: [
+							[-9.16, 38.74],
+							[-9.17, 38.75],
+						],
+					},
+				}),
+			)
+			expect(mapInstance.addSource).toHaveBeenCalledTimes(1)
+		})
 	})
 })
