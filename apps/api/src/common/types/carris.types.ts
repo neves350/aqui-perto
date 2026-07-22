@@ -60,10 +60,14 @@ export interface CarrisArrival {
 }
 
 export interface CarrisShape {
-	id: string
+	shape_id: string
 	extension: number
 	geojson: {
-		type: 'LineString'
-		coordinates: [number, number][] // [lon, lat]
+		type: 'Feature'
+		properties: Record<string, unknown>
+		geometry: {
+			type: 'LineString'
+			coordinates: [number, number][] // [lon, lat]
+		}
 	}
 }

@@ -166,7 +166,10 @@ export class LinesService {
 
 		try {
 			const shape = await this.carrisClientService.getShape(shapeId)
-			return shape.geojson.coordinates.map(([lon, lat]) => ({ lat, lon }))
+			return shape.geojson.geometry.coordinates.map(([lon, lat]) => ({
+				lat,
+				lon,
+			}))
 		} catch {
 			return []
 		}

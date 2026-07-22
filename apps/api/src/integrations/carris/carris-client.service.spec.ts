@@ -5,14 +5,18 @@ import { CarrisShape } from 'src/common/types/carris.types'
 import { CarrisClientService } from './carris-client.service'
 
 const SHAPE: CarrisShape = {
-	id: '1_A6RA0',
+	shape_id: '1_A6RA0',
 	extension: 1234,
 	geojson: {
-		type: 'LineString',
-		coordinates: [
-			[-9.220572, 38.734436],
-			[-9.22055, 38.73442],
-		],
+		type: 'Feature',
+		properties: {},
+		geometry: {
+			type: 'LineString',
+			coordinates: [
+				[-9.220572, 38.734436],
+				[-9.22055, 38.73442],
+			],
+		},
 	},
 }
 
@@ -53,7 +57,7 @@ describe('CarrisClientService', () => {
 		})
 
 		it('makes a separate request for a different shape_id', async () => {
-			const otherShape: CarrisShape = { ...SHAPE, id: '2_B7SB1' }
+			const otherShape: CarrisShape = { ...SHAPE, shape_id: '2_B7SB1' }
 			httpGet.mockReturnValueOnce(of({ data: SHAPE }))
 			httpGet.mockReturnValueOnce(of({ data: otherShape }))
 

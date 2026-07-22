@@ -419,14 +419,18 @@ describe('LinesService', () => {
 				},
 			])
 			mockCarris.getShape.mockResolvedValue({
-				id: 'shape1',
+				shape_id: 'shape1',
 				extension: 1234,
 				geojson: {
-					type: 'LineString',
-					coordinates: [
-						[-9.136, 38.736],
-						[-9.183, 38.791],
-					],
+					type: 'Feature',
+					properties: {},
+					geometry: {
+						type: 'LineString',
+						coordinates: [
+							[-9.136, 38.736],
+							[-9.183, 38.791],
+						],
+					},
 				},
 			})
 
