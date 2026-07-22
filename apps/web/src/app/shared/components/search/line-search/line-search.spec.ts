@@ -33,7 +33,39 @@ describe('LineSearch', () => {
 		fixture.detectChanges()
 
 		expect(carrisServiceMock.searchLines).not.toHaveBeenCalled()
-		expect(component.lines()).toEqual([])
+	})
+
+	it('loads all lines for an empty query when showAllOnEmptyQuery is set', () => {
+		vi.useFakeTimers()
+		carrisServiceMock.searchLines.mockReturnValue(
+			of([
+				{
+					id: '4200_0',
+					shortName: '758',
+					longName: 'Alameda - Odivelas',
+					color: '#FF0000',
+					textColor: '#FFFFFF',
+				},
+			]),
+		)
+
+		fixture = TestBed.createComponent(LineSearch)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('showAllOnEmptyQuery', true)
+		fixture.detectChanges()
+		vi.advanceTimersByTime(300)
+		fixture.detectChanges()
+
+		expect(carrisServiceMock.searchLines).toHaveBeenCalledWith('')
+		expect(component.lines()).toEqual([
+			{
+				id: '4200_0',
+				shortName: '758',
+				longName: 'Alameda - Odivelas',
+				color: '#FF0000',
+				textColor: '#FFFFFF',
+			},
+		])
 	})
 
 	it('searches lines once after the debounce window', () => {

@@ -31,6 +31,48 @@ describe('StopSearch', () => {
 		expect(component.stops()).toEqual([])
 	})
 
+	it('loads all stops for an empty query when showAllOnEmptyQuery is set', () => {
+		vi.useFakeTimers()
+		carrisServiceMock.searchStops.mockReturnValue(
+			of([{ id: 'stop-1', name: 'Praça de Espanha', lat: 38.72, lon: -9.15 }]),
+		)
+
+		fixture = TestBed.createComponent(StopSearch)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('showAllOnEmptyQuery', true)
+		fixture.detectChanges()
+		vi.advanceTimersByTime(300)
+		fixture.detectChanges()
+
+		expect(carrisServiceMock.searchStops).toHaveBeenCalledWith('')
+		expect(component.stops()).toEqual([
+			{ id: 'stop-1', name: 'Praça de Espanha', lat: 38.72, lon: -9.15 },
+		])
+	})
+
+	it('sorts stops alphabetically by name', () => {
+		vi.useFakeTimers()
+		carrisServiceMock.searchStops.mockReturnValue(
+			of([
+				{ id: 'stop-2', name: 'Sete Rios', lat: 38.74, lon: -9.16 },
+				{ id: 'stop-1', name: 'Praça de Espanha', lat: 38.72, lon: -9.15 },
+			]),
+		)
+
+		fixture = TestBed.createComponent(StopSearch)
+		component = fixture.componentInstance
+		fixture.detectChanges()
+
+		component.onQueryChange('a')
+		vi.advanceTimersByTime(300)
+		fixture.detectChanges()
+
+		expect(component.stops()).toEqual([
+			{ id: 'stop-1', name: 'Praça de Espanha', lat: 38.72, lon: -9.15 },
+			{ id: 'stop-2', name: 'Sete Rios', lat: 38.74, lon: -9.16 },
+		])
+	})
+
 	it('searches stops once after the debounce window', () => {
 		vi.useFakeTimers()
 		carrisServiceMock.searchStops.mockReturnValue(

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core'
+import { Component, computed, inject, input, signal } from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
 import { RouterLink } from '@angular/router'
 import { Line } from '@/shared/models/line.model'
@@ -29,6 +29,8 @@ function compareShortName(a: string, b: string): number {
 export class LineSearch {
 	private readonly carrisService = inject(CarrisService)
 
+	readonly showAllOnEmptyQuery = input(false)
+
 	readonly query = signal('')
 	readonly selectedLineId = signal<string | null>(null)
 
@@ -36,11 +38,14 @@ export class LineSearch {
 		toObservable(this.query).pipe(
 			debounceTime(DEBOUNCE_MS),
 			distinctUntilChanged(),
-			switchMap((query) =>
-				query.trim().length === 0
-					? of<Line[]>([])
-					: this.carrisService.searchLines(query),
-			),
+			switchMap((query) => {
+				if (query.trim().length > 0) {
+					return this.carrisService.searchLines(query)
+				}
+				return this.showAllOnEmptyQuery()
+					? this.carrisService.searchLines('')
+					: of<Line[]>([])
+			}),
 		),
 		{ initialValue: [] as Line[] },
 	)

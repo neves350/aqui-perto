@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing'
+import { By } from '@angular/platform-browser'
 import { CarrisService } from '@core/services/carris.service'
 import { carrisServiceMock } from '@core/testing/mocks'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { LineSearch } from '@/shared/components/search/line-search/line-search'
+import { StopSearch } from '@/shared/components/search/stop-search/stop-search'
 import { SearchOverlay } from './search-overlay'
 
 describe('SearchOverlay', () => {
@@ -42,5 +45,19 @@ describe('SearchOverlay', () => {
 	it('ignores unknown tab activations', () => {
 		component.onTabActivated('unknown')
 		expect(component.activeTab()).toBe('linha')
+	})
+
+	it('tells LineSearch and StopSearch to show all results for an empty query', () => {
+		const trigger: HTMLButtonElement = fixture.nativeElement.querySelector(
+			'button[aria-label="Pesquisar"]',
+		)
+		trigger.click()
+		fixture.detectChanges()
+
+		const lineSearch = fixture.debugElement.query(By.directive(LineSearch))
+		const stopSearch = fixture.debugElement.query(By.directive(StopSearch))
+
+		expect(lineSearch.componentInstance.showAllOnEmptyQuery()).toBe(true)
+		expect(stopSearch.componentInstance.showAllOnEmptyQuery()).toBe(true)
 	})
 })
