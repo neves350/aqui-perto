@@ -3,6 +3,7 @@ import { inject, Service } from '@angular/core'
 import { environment } from '@environments/environment.development'
 import { Arrival } from '@/shared/models/arrival.model'
 import { Line } from '@/shared/models/line.model'
+import { LineRoute } from '@/shared/models/line-route.model'
 import { Stop } from '@/shared/models/stop.model'
 
 @Service()
@@ -30,6 +31,10 @@ export class CarrisApi {
 		return this.http.get<Line[]>(`${this.baseUrl}/lines`, {
 			params: { query },
 		})
+	}
+
+	getLineRoute(lineId: string) {
+		return this.http.get<LineRoute>(`${this.baseUrl}/lines/${lineId}/route`)
 	}
 
 	getLineById(id: string) {

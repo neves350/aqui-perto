@@ -21,6 +21,10 @@ export class CarrisService {
 		return this.carrisApi.searchLines(query)
 	}
 
+	getLineRoute(lineId: string) {
+		return this.carrisApi.getLineRoute(lineId)
+	}
+
 	getLineById(id: string) {
 		return this.carrisApi.getLineById(id)
 	}

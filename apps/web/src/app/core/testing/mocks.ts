@@ -17,6 +17,7 @@ export const carrisServiceMock = {
 	getStopById: vi.fn(),
 	searchStops: vi.fn(),
 	searchLines: vi.fn(),
+	getLineRoute: vi.fn(),
 	getLineById: vi.fn(),
 	getArrivals: vi.fn(),
 }

@@ -71,6 +71,21 @@ describe('CarrisApi', () => {
 		req.flush([])
 	})
 
+	it('getLineRoute requests /lines/:id/route', () => {
+		api.getLineRoute('4200_0').subscribe()
+
+		const req = httpMock.expectOne(`${environment.apiUrl}/lines/4200_0/route`)
+		expect(req.request.method).toBe('GET')
+		req.flush({
+			id: '4200_0',
+			shortName: '758',
+			longName: 'Alameda - Odivelas',
+			color: '#FF0000',
+			textColor: '#FFFFFF',
+			stops: [],
+		})
+	})
+
 	it('getLineById requests /lines/:id', () => {
 		api.getLineById('4200_0').subscribe()
 
