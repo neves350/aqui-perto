@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
-import { RouterLink } from '@angular/router'
+import { Router, RouterLink } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
 import { catchError, map, Observable, of, startWith, switchMap } from 'rxjs'
 import { LineRoute } from '@/shared/models/line-route.model'
@@ -44,6 +44,27 @@ const INITIAL_STATE: LineDetailState = { loading: true, route: null }
 			font-size: 0.875rem;
 		}
 
+		.line-detail__directions {
+			display: flex;
+			gap: 0.5rem;
+			padding: 0 1rem 1rem;
+		}
+
+		.line-detail__direction {
+			padding: 0.375rem 0.75rem;
+			border-radius: 999px;
+			border: 1px solid var(--border);
+			background: transparent;
+			color: inherit;
+			cursor: pointer;
+		}
+
+		.line-detail__direction--active {
+			background: var(--foreground);
+			border-color: var(--foreground);
+			color: var(--background);
+		}
+
 		.line-detail__map {
 			height: 40%;
 		}
@@ -59,14 +80,21 @@ const INITIAL_STATE: LineDetailState = { loading: true, route: null }
 })
 export class LineDetail {
 	private readonly carrisService = inject(CarrisService)
+	private readonly router = inject(Router)
 
 	readonly id = input.required<string>()
+	readonly direction = input<number>()
+
+	private readonly params = computed(() => ({
+		id: this.id(),
+		direction: this.direction(),
+	}))
 
 	private readonly state = toSignal(
-		toObservable(this.id).pipe(
+		toObservable(this.params).pipe(
 			switchMap(
-				(id): Observable<LineDetailState> =>
-					this.carrisService.getLineRoute(id).pipe(
+				({ id, direction }): Observable<LineDetailState> =>
+					this.carrisService.getLineRoute(id, direction).pipe(
 						map((route): LineDetailState => ({ loading: false, route })),
 						startWith<LineDetailState>({ loading: true, route: null }),
 						catchError(() =>
@@ -88,4 +116,11 @@ export class LineDetail {
 	)
 
 	readonly center = computed(() => this.mapRoute()[0] ?? DEFAULT_CENTER)
+
+	selectDirection(directionId: number): void {
+		this.router.navigate([], {
+			queryParams: { direction: directionId },
+			queryParamsHandling: 'merge',
+		})
+	}
 }

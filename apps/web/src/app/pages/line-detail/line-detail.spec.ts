@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing'
-import { provideRouter } from '@angular/router'
+import { provideRouter, Router } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
 import { carrisServiceMock } from '@core/testing/mocks'
 import { of, throwError } from 'rxjs'
@@ -26,6 +26,9 @@ const LINE_ROUTE = {
 	longName: 'Alameda - Odivelas',
 	color: '#FF0000',
 	textColor: '#FFFFFF',
+	directionId: 0,
+	headsign: 'Odivelas',
+	directions: [{ directionId: 0, headsign: 'Odivelas' }],
 	stops: [
 		{
 			stopId: 'stopA',
@@ -83,7 +86,10 @@ describe('LineDetail', () => {
 		fixture.componentRef.setInput('id', '4200_0')
 		fixture.detectChanges()
 
-		expect(carrisServiceMock.getLineRoute).toHaveBeenCalledWith('4200_0')
+		expect(carrisServiceMock.getLineRoute).toHaveBeenCalledWith(
+			'4200_0',
+			undefined,
+		)
 		expect(component.loading()).toBe(false)
 		expect(component.route()).toEqual(LINE_ROUTE)
 	})
@@ -117,5 +123,53 @@ describe('LineDetail', () => {
 		expect(MockMap).toHaveBeenCalledWith(
 			expect.objectContaining({ center: [-9.136, 38.736] }),
 		)
+	})
+
+	it('loads the requested direction when the direction input is set', () => {
+		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+
+		fixture = TestBed.createComponent(LineDetail)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('id', '4200_0')
+		fixture.componentRef.setInput('direction', 1)
+		fixture.detectChanges()
+
+		expect(carrisServiceMock.getLineRoute).toHaveBeenCalledWith('4200_0', 1)
+	})
+
+	it('re-fetches the route when the direction input changes', () => {
+		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+
+		fixture = TestBed.createComponent(LineDetail)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('id', '4200_0')
+		fixture.detectChanges()
+
+		fixture.componentRef.setInput('direction', 1)
+		fixture.detectChanges()
+
+		expect(carrisServiceMock.getLineRoute).toHaveBeenLastCalledWith(
+			'4200_0',
+			1,
+		)
+	})
+
+	it('navigates with the selected direction as a query param', () => {
+		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+
+		fixture = TestBed.createComponent(LineDetail)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('id', '4200_0')
+		fixture.detectChanges()
+
+		const router = TestBed.inject(Router)
+		const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true)
+
+		component.selectDirection(1)
+
+		expect(navigateSpy).toHaveBeenCalledWith([], {
+			queryParams: { direction: 1 },
+			queryParamsHandling: 'merge',
+		})
 	})
 })

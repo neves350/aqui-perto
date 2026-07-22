@@ -14,6 +14,24 @@
 			<h1>{{ line.longName }}</h1>
 		</header>
 
+		@if (line.directions.length > 1) {
+			<div class="line-detail__directions">
+				@for (dir of line.directions; track dir.directionId) {
+					<button
+						type="button"
+						class="line-detail__direction"
+						[class.line-detail__direction--active]="
+							dir.directionId === line.directionId
+						"
+						[attr.aria-pressed]="dir.directionId === line.directionId"
+						(click)="selectDirection(dir.directionId)"
+					>
+						{{ dir.headsign }}
+					</button>
+				}
+			</div>
+		}
+
 		<div class="line-detail__map">
 			<app-map [center]="center()" [route]="mapRoute()" />
 		</div>
