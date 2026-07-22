@@ -7,6 +7,7 @@ import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-ar
 import { LineRoute } from '@/shared/models/line-route.model'
 import { MapComponent } from '@/shared/ui/map/map.component'
 import { MapCenter } from '@/shared/ui/map/map.types'
+import { getDirectionalLongName } from '@/shared/utils/directional-long-name'
 
 const DEFAULT_CENTER: MapCenter = { lat: 38.7223, lon: -9.1393 }
 
@@ -21,76 +22,7 @@ const INITIAL_STATE: LineDetailState = { loading: true, route: null }
 	selector: 'app-line-detail',
 	imports: [MapComponent, RouterLink, StopArrivalsList],
 	templateUrl: './line-detail.html',
-	styles: `
-		.line-detail {
-			display: flex;
-			flex-direction: column;
-			height: 100dvh;
-		}
-
-		.line-detail__header {
-			display: flex;
-			align-items: center;
-			gap: 0.75rem;
-			padding: 1rem;
-		}
-
-		.line-detail__badge {
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			padding: 0.25rem 0.5rem;
-			border-radius: 0.25rem;
-			font-weight: 700;
-			font-size: 0.875rem;
-		}
-
-		.line-detail__directions {
-			display: flex;
-			gap: 0.5rem;
-			padding: 0 1rem 1rem;
-		}
-
-		.line-detail__direction {
-			padding: 0.375rem 0.75rem;
-			border-radius: 999px;
-			border: 1px solid var(--border);
-			background: transparent;
-			color: inherit;
-			cursor: pointer;
-		}
-
-		.line-detail__direction--active {
-			background: var(--foreground);
-			border-color: var(--foreground);
-			color: var(--background);
-		}
-
-		.line-detail__map {
-			height: 40%;
-		}
-
-		.line-detail__stops {
-			flex: 1;
-			overflow-y: auto;
-			padding: 1rem;
-			list-style: none;
-			margin: 0;
-		}
-
-		.line-detail__stop {
-			display: flex;
-			justify-content: space-between;
-			width: 100%;
-			padding: 0.5rem 0;
-			border: none;
-			background: transparent;
-			color: inherit;
-			font: inherit;
-			text-align: left;
-			cursor: pointer;
-		}
-	`,
+	styleUrl: './line-detail.css',
 })
 export class LineDetail {
 	private readonly carrisService = inject(CarrisService)
@@ -123,6 +55,11 @@ export class LineDetail {
 	readonly loading = computed(() => this.state().loading)
 	readonly route = computed(() => this.state().route)
 
+	readonly directionalLongName = computed(() => {
+		const line = this.route()
+		return line ? getDirectionalLongName(line.longName, line.headsign) : ''
+	})
+
 	readonly mapRoute = computed(() =>
 		(this.route()?.stops ?? []).map(
 			(stop): MapCenter => ({ lat: stop.lat, lon: stop.lon }),
@@ -141,6 +78,8 @@ export class LineDetail {
 	}
 
 	selectStop(stopId: string): void {
-		this.selectedStopId.update((current) => (current === stopId ? null : stopId))
+		this.selectedStopId.update((current) =>
+			current === stopId ? null : stopId,
+		)
 	}
 }

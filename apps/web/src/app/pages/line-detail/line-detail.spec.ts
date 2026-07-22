@@ -110,6 +110,17 @@ describe('LineDetail', () => {
 		expect(component.route()).toBeNull()
 	})
 
+	it('shows the longName reordered to match the current direction headsign', () => {
+		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+
+		fixture = TestBed.createComponent(LineDetail)
+		fixture.componentRef.setInput('id', '4200_0')
+		fixture.detectChanges()
+
+		const heading = fixture.debugElement.query(By.css('h1'))
+		expect(heading.nativeElement.textContent.trim()).toBe('Alameda - Odivelas')
+	})
+
 	it('passes the ordered stop coordinates to the map as the route and centers on the first stop', () => {
 		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
 

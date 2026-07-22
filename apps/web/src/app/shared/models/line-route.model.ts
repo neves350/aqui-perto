@@ -23,4 +23,5 @@ export interface LineRoute {
 	headsign: string
 	directions: LineDirection[]
 	stops: LineRouteStop[]
+	shape: { lat: number; lon: number }[]
 }
