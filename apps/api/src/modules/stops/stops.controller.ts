@@ -18,7 +18,7 @@ export class StopsController {
 	@ApiOperation({ summary: 'Find stops by name, or near a given point' })
 	@ApiResponse({ status: 400, description: 'Invalid query, or missing lat/lon' })
 	find(@Query() query: StopQueryDto) {
-		if (query.query) {
+		if (query.query !== undefined) {
 			return this.stopsService.search(query.query)
 		}
 

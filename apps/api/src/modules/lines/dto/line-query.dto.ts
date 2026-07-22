@@ -1,12 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsString } from 'class-validator'
+import { ApiPropertyOptional } from '@nestjs/swagger'
+import { IsOptional, IsString } from 'class-validator'
 
 export class LineQueryDto {
+	@IsOptional()
 	@IsString()
-	@IsNotEmpty({ message: 'query must not be empty' })
-	@ApiProperty({
-		description: 'Search query matched against line short/long name',
+	@ApiPropertyOptional({
+		description:
+			'Search query matched against line short/long name. Omit (or leave empty) to list all lines.',
 		example: '758',
 	})
-	query!: string
+	query?: string
 }

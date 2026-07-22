@@ -18,7 +18,7 @@ export class LinesController {
 	@ApiOperation({ summary: 'Search lines by short/long name' })
 	@ApiResponse({ status: 400, description: 'Invalid query' })
 	search(@Query() query: LineQueryDto) {
-		return this.linesService.search(query.query)
+		return this.linesService.search(query.query ?? '')
 	}
 
 	@Get(':id/route')
