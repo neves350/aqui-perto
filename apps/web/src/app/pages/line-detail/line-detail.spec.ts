@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing'
+import { By } from '@angular/platform-browser'
 import { provideRouter, Router } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
 import { carrisServiceMock } from '@core/testing/mocks'
+import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-arrivals-list'
 import { of, throwError } from 'rxjs'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LineDetail } from './line-detail'
@@ -170,6 +172,59 @@ describe('LineDetail', () => {
 		expect(navigateSpy).toHaveBeenCalledWith([], {
 			queryParams: { direction: 1 },
 			queryParamsHandling: 'merge',
+		})
+	})
+
+	describe('clicking a stop', () => {
+		it('shows no arrivals list until a stop is clicked', () => {
+			carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+
+			fixture = TestBed.createComponent(LineDetail)
+			fixture.componentRef.setInput('id', '4200_0')
+			fixture.detectChanges()
+
+			expect(
+				fixture.debugElement.query(By.directive(StopArrivalsList)),
+			).toBeNull()
+		})
+
+		it('shows this line arrivals for the clicked stop', () => {
+			carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+			carrisServiceMock.getArrivals.mockReturnValue(of([]))
+
+			fixture = TestBed.createComponent(LineDetail)
+			component = fixture.componentInstance
+			fixture.componentRef.setInput('id', '4200_0')
+			fixture.detectChanges()
+
+			component.selectStop('stopA')
+			fixture.detectChanges()
+
+			const arrivalsList = fixture.debugElement.query(
+				By.directive(StopArrivalsList),
+			)
+			expect(arrivalsList).not.toBeNull()
+			expect(arrivalsList.componentInstance.stopId()).toBe('stopA')
+			expect(arrivalsList.componentInstance.lineId()).toBe('4200_0')
+		})
+
+		it('hides the arrivals list when the same stop is clicked again', () => {
+			carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+			carrisServiceMock.getArrivals.mockReturnValue(of([]))
+
+			fixture = TestBed.createComponent(LineDetail)
+			component = fixture.componentInstance
+			fixture.componentRef.setInput('id', '4200_0')
+			fixture.detectChanges()
+
+			component.selectStop('stopA')
+			fixture.detectChanges()
+			component.selectStop('stopA')
+			fixture.detectChanges()
+
+			expect(
+				fixture.debugElement.query(By.directive(StopArrivalsList)),
+			).toBeNull()
 		})
 	})
 })

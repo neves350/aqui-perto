@@ -93,4 +93,69 @@ describe('StopArrivalsList', () => {
 			},
 		])
 	})
+
+	it('filters arrivals to the given lineId when set', () => {
+		carrisServiceMock.getArrivals.mockReturnValue(
+			of([
+				{
+					tripId: 'trip-1',
+					lineId: '4200_0',
+					lineName: '758 Odivelas',
+					arrivalTime: '09:05',
+					type: 'scheduled',
+				},
+				{
+					tripId: 'trip-2',
+					lineId: '4300_0',
+					lineName: '759 Loures',
+					arrivalTime: '09:10',
+					type: 'scheduled',
+				},
+			]),
+		)
+
+		fixture = TestBed.createComponent(StopArrivalsList)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('stopId', 'stop-1')
+		fixture.componentRef.setInput('lineId', '4300_0')
+		fixture.detectChanges()
+
+		expect(component.arrivals()).toEqual([
+			{
+				tripId: 'trip-2',
+				lineId: '4300_0',
+				lineName: '759 Loures',
+				arrivalTime: '09:10',
+				type: 'scheduled',
+			},
+		])
+	})
+
+	it('shows all arrivals when lineId is not set', () => {
+		carrisServiceMock.getArrivals.mockReturnValue(
+			of([
+				{
+					tripId: 'trip-1',
+					lineId: '4200_0',
+					lineName: '758 Odivelas',
+					arrivalTime: '09:05',
+					type: 'scheduled',
+				},
+				{
+					tripId: 'trip-2',
+					lineId: '4300_0',
+					lineName: '759 Loures',
+					arrivalTime: '09:10',
+					type: 'scheduled',
+				},
+			]),
+		)
+
+		fixture = TestBed.createComponent(StopArrivalsList)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('stopId', 'stop-1')
+		fixture.detectChanges()
+
+		expect(component.arrivals()).toHaveLength(2)
+	})
 })
