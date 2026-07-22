@@ -323,6 +323,173 @@ describe('LinesService', () => {
 						scheduledArrival: '10:15',
 					},
 				],
+				shape: [],
+			})
+		})
+
+		it('maps the shape geometry when the pattern has a shape_id', async () => {
+			jest.useFakeTimers().setSystemTime(new Date('2026-07-22T10:00:00'))
+
+			mockCarris.getLineById.mockResolvedValue({
+				id: '4200_0',
+				short_name: '758',
+				long_name: 'Alameda - Odivelas',
+				color: '#FF0000',
+				text_color: '#FFFFFF',
+				route_ids: ['route1'],
+				pattern_ids: ['pattern1'],
+			})
+			mockCarris.getPattern.mockResolvedValue({
+				id: 'pattern1',
+				line_id: '4200_0',
+				route_id: 'route1',
+				direction_id: 0,
+				shape_id: 'shape1',
+				headsign: 'Odivelas',
+				path: [{ stop_id: 'stopA', stop_sequence: 1, distance: 0 }],
+				trips: [
+					{
+						schedule: [
+							{ stop_id: 'stopA', stop_sequence: 1, arrival_time: '10:05:00' },
+						],
+						trip_ids: ['trip1'],
+						service_ids: ['service1'],
+						valid_on: ['20260722'],
+					},
+				],
+			})
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'stopA',
+					long_name: 'Alameda',
+					short_name: null,
+					lat: 38.736,
+					lon: -9.136,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+			])
+			mockCarris.getShape.mockResolvedValue({
+				id: 'shape1',
+				extension: 1234,
+				geojson: {
+					type: 'LineString',
+					coordinates: [
+						[-9.136, 38.736],
+						[-9.183, 38.791],
+					],
+				},
+			})
+
+			const result = await service.getRouteDetail('4200_0')
+
+			expect(mockCarris.getShape).toHaveBeenCalledWith('shape1')
+			expect(result?.shape).toEqual([
+				{ lat: 38.736, lon: -9.136 },
+				{ lat: 38.791, lon: -9.183 },
+			])
+		})
+
+		it('falls back to an empty shape when the pattern has no shape_id', async () => {
+			jest.useFakeTimers().setSystemTime(new Date('2026-07-22T10:00:00'))
+
+			mockCarris.getLineById.mockResolvedValue({
+				id: '4200_0',
+				short_name: '758',
+				long_name: 'Alameda - Odivelas',
+				color: '#FF0000',
+				text_color: '#FFFFFF',
+				route_ids: ['route1'],
+				pattern_ids: ['pattern1'],
+			})
+			mockCarris.getPattern.mockResolvedValue({
+				id: 'pattern1',
+				line_id: '4200_0',
+				route_id: 'route1',
+				direction_id: 0,
+				headsign: 'Odivelas',
+				path: [{ stop_id: 'stopA', stop_sequence: 1, distance: 0 }],
+				trips: [],
+			})
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'stopA',
+					long_name: 'Alameda',
+					short_name: null,
+					lat: 38.736,
+					lon: -9.136,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+			])
+
+			const result = await service.getRouteDetail('4200_0')
+
+			expect(mockCarris.getShape).not.toHaveBeenCalled()
+			expect(result?.shape).toEqual([])
+		})
+
+		it('falls back to an empty shape when fetching the shape fails', async () => {
+			jest.useFakeTimers().setSystemTime(new Date('2026-07-22T10:00:00'))
+
+			mockCarris.getLineById.mockResolvedValue({
+				id: '4200_0',
+				short_name: '758',
+				long_name: 'Alameda - Odivelas',
+				color: '#FF0000',
+				text_color: '#FFFFFF',
+				route_ids: ['route1'],
+				pattern_ids: ['pattern1'],
+			})
+			mockCarris.getPattern.mockResolvedValue({
+				id: 'pattern1',
+				line_id: '4200_0',
+				route_id: 'route1',
+				direction_id: 0,
+				shape_id: 'shape1',
+				headsign: 'Odivelas',
+				path: [{ stop_id: 'stopA', stop_sequence: 1, distance: 0 }],
+				trips: [],
+			})
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'stopA',
+					long_name: 'Alameda',
+					short_name: null,
+					lat: 38.736,
+					lon: -9.136,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+			])
+			mockCarris.getShape.mockRejectedValue(new Error('network error'))
+
+			const result = await service.getRouteDetail('4200_0')
+
+			expect(result).toEqual({
+				id: '4200_0',
+				shortName: '758',
+				longName: 'Alameda - Odivelas',
+				color: '#FF0000',
+				textColor: '#FFFFFF',
+				directionId: 0,
+				headsign: 'Odivelas',
+				directions: [{ directionId: 0, headsign: 'Odivelas' }],
+				stops: [
+					{
+						stopId: 'stopA',
+						name: 'Alameda',
+						sequence: 1,
+						lat: 38.736,
+						lon: -9.136,
+						minutesUntilArrival: null,
+						scheduledArrival: null,
+					},
+				],
+				shape: [],
 			})
 		})
 

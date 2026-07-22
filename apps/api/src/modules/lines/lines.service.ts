@@ -6,6 +6,7 @@ import {
 	LineDirectionDto,
 	LineResponseDto,
 	LineRouteResponseDto,
+	LineRouteShapePointDto,
 } from './dto/line-response.dto'
 
 @Injectable()
@@ -102,6 +103,7 @@ export class LinesService {
 
 		const stops = await this.carrisClientService.getStops()
 		const stopById = new Map(stops.map((stop) => [stop.id, stop]))
+		const shape = await this.getShapeCoordinates(pattern.shape_id)
 
 		const tripGroupsToday = pattern.trips.filter((trip) =>
 			trip.valid_on.includes(today),
@@ -148,6 +150,20 @@ export class LinesService {
 						scheduledArrival: nextArrival ? nextArrival.time.slice(0, 5) : null,
 					}
 				}),
+			shape,
+		}
+	}
+
+	private async getShapeCoordinates(
+		shapeId: string | undefined,
+	): Promise<LineRouteShapePointDto[]> {
+		if (!shapeId) return []
+
+		try {
+			const shape = await this.carrisClientService.getShape(shapeId)
+			return shape.geojson.coordinates.map(([lon, lat]) => ({ lat, lon }))
+		} catch {
+			return []
 		}
 	}
 

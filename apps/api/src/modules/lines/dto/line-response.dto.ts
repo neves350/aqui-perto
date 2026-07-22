@@ -49,9 +49,15 @@ export class LineDirectionDto {
 	headsign!: string
 }
 
+export class LineRouteShapePointDto {
+	lat!: number
+	lon!: number
+}
+
 export class LineRouteResponseDto extends LineResponseDto {
 	directionId!: number
 	headsign!: string
 	directions!: LineDirectionDto[]
 	stops!: LineRouteStopDto[]
+	shape!: LineRouteShapePointDto[]
 }
