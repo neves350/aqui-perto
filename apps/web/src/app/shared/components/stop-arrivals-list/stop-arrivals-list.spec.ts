@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing'
 import { CarrisService } from '@core/services/carris.service'
 import { carrisServiceMock } from '@core/testing/mocks'
 import { of } from 'rxjs'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StopArrivalsList } from './stop-arrivals-list'
 
 describe('StopArrivalsList', () => {
@@ -16,6 +16,10 @@ describe('StopArrivalsList', () => {
 			imports: [StopArrivalsList],
 			providers: [{ provide: CarrisService, useValue: carrisServiceMock }],
 		})
+	})
+
+	afterEach(() => {
+		vi.useRealTimers()
 	})
 
 	it('loads and exposes arrivals for the given stop', () => {
@@ -157,5 +161,85 @@ describe('StopArrivalsList', () => {
 		fixture.detectChanges()
 
 		expect(component.arrivals()).toHaveLength(2)
+	})
+
+	it('computes minutes until arrival from the current time', () => {
+		vi.useFakeTimers().setSystemTime(new Date('2026-07-22T09:00:00'))
+		carrisServiceMock.getArrivals.mockReturnValue(
+			of([
+				{
+					tripId: 'trip-1',
+					lineId: '4200_0',
+					lineName: '758 Odivelas',
+					arrivalTime: '09:05',
+					type: 'scheduled',
+				},
+			]),
+		)
+
+		fixture = TestBed.createComponent(StopArrivalsList)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('stopId', 'stop-1')
+		fixture.detectChanges()
+
+		expect(component.arrivalsWithMinutes()).toEqual([
+			{
+				tripId: 'trip-1',
+				lineId: '4200_0',
+				lineName: '758 Odivelas',
+				arrivalTime: '09:05',
+				type: 'scheduled',
+				minutesUntilArrival: 5,
+			},
+		])
+	})
+
+	it('recalculates minutes every 30 seconds without refetching', () => {
+		vi.useFakeTimers().setSystemTime(new Date('2026-07-22T09:00:00'))
+		carrisServiceMock.getArrivals.mockReturnValue(
+			of([
+				{
+					tripId: 'trip-1',
+					lineId: '4200_0',
+					lineName: '758 Odivelas',
+					arrivalTime: '09:05',
+					type: 'scheduled',
+				},
+			]),
+		)
+
+		fixture = TestBed.createComponent(StopArrivalsList)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('stopId', 'stop-1')
+		fixture.detectChanges()
+
+		vi.setSystemTime(new Date('2026-07-22T09:02:00'))
+		vi.advanceTimersByTime(30_000)
+		fixture.detectChanges()
+
+		expect(component.arrivalsWithMinutes()[0].minutesUntilArrival).toBe(3)
+		expect(carrisServiceMock.getArrivals).toHaveBeenCalledTimes(1)
+	})
+
+	it('renders the minutes until arrival with the scheduled time in parentheses', () => {
+		vi.useFakeTimers().setSystemTime(new Date('2026-07-22T09:00:00'))
+		carrisServiceMock.getArrivals.mockReturnValue(
+			of([
+				{
+					tripId: 'trip-1',
+					lineId: '4200_0',
+					lineName: '758 Odivelas',
+					arrivalTime: '09:05',
+					type: 'scheduled',
+				},
+			]),
+		)
+
+		fixture = TestBed.createComponent(StopArrivalsList)
+		fixture.componentRef.setInput('stopId', 'stop-1')
+		fixture.detectChanges()
+
+		const item = fixture.nativeElement.querySelector('li')
+		expect(item.textContent).toContain('5 min (09:05h)')
 	})
 })

@@ -1,11 +1,15 @@
 @if (loading()) {
-	<p>A carregar chegadas...</p>
+<p>A carregar chegadas...</p>
 } @else if (arrivals().length === 0) {
-	<p>Sem chegadas previstas.</p>
+<p>Sem chegadas previstas.</p>
 } @else {
-	<ul>
-		@for (arrival of arrivals(); track arrival.tripId) {
-			<li>{{ arrival.lineName }} — {{ arrival.arrivalTime }}</li>
-		}
-	</ul>
+<ul>
+	@for (arrival of arrivalsWithMinutes(); track arrival.tripId) {
+	<li>
+		{{ arrival.lineName }} — {{ arrival.minutesUntilArrival }} min ({{
+		arrival.arrivalTime
+		}}h)
+	</li>
+	}
+</ul>
 }
