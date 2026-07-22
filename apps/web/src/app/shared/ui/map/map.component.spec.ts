@@ -144,6 +144,34 @@ describe('MapComponent', () => {
 			)
 		})
 
+		it('fits the map view to the route bounds once, on the initial draw', () => {
+			const fixture = TestBed.createComponent(MapComponent)
+			fixture.componentRef.setInput('center', { lat: 38.7223, lon: -9.1393 })
+			fixture.componentRef.setInput('route', [
+				{ lat: 38.72, lon: -9.14 },
+				{ lat: 38.8, lon: -9.2 },
+			])
+			fixture.detectChanges()
+
+			triggerMapLoad()
+
+			expect(mapInstance.fitBounds).toHaveBeenCalledWith(
+				[
+					[-9.2, 38.72],
+					[-9.14, 38.8],
+				],
+				expect.objectContaining({ duration: 0 }),
+			)
+
+			fixture.componentRef.setInput('route', [
+				{ lat: 38.73, lon: -9.15 },
+				{ lat: 38.79, lon: -9.19 },
+			])
+			fixture.detectChanges()
+
+			expect(mapInstance.fitBounds).toHaveBeenCalledTimes(1)
+		})
+
 		it('renders a numbered marker with a custom element for each route stop', async () => {
 			const { Marker: MockMarker } = await import('maplibre-gl')
 			const fixture = TestBed.createComponent(MapComponent)

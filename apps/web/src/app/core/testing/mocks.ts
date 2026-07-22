@@ -11,6 +11,7 @@ export const mapInstance = {
 	addSource: vi.fn(),
 	addLayer: vi.fn(),
 	getSource: vi.fn().mockReturnValue(routeSourceInstance),
+	fitBounds: vi.fn(),
 }
 
 export const markerInstance = {

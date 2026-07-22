@@ -159,6 +159,16 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 			paint: { 'line-color': ROUTE_LINE_COLOR, 'line-width': 4 },
 		})
 		this.routeSourceAdded = true
+
+		const lons = route.map((point) => point.lon)
+		const lats = route.map((point) => point.lat)
+		map.fitBounds(
+			[
+				[Math.min(...lons), Math.min(...lats)],
+				[Math.max(...lons), Math.max(...lats)],
+			],
+			{ padding: 40, duration: 0 },
+		)
 	}
 
 	private renderRouteMarkers(route: MapCenter[]): void {
