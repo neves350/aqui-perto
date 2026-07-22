@@ -37,6 +37,7 @@ export interface CarrisPattern {
 	line_id: string
 	route_id: string
 	direction_id: number
+	shape_id: string
 	headsign: string
 	path: CarrisPatternStop[]
 	trips: CarrisPatternTripGroup[]
@@ -56,4 +57,13 @@ export interface CarrisArrival {
 	observed_arrival: string | null
 	observed_arrival_unix: number | null
 	vehicle_id: string | null
+}
+
+export interface CarrisShape {
+	id: string
+	extension: number
+	geojson: {
+		type: 'LineString'
+		coordinates: [number, number][] // [lon, lat]
+	}
 }

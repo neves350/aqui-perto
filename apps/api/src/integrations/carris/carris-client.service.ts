@@ -5,6 +5,7 @@ import {
 	CarrisArrival,
 	CarrisLine,
 	CarrisPattern,
+	CarrisShape,
 	CarrisStop,
 } from 'src/common/types/carris.types'
 
@@ -14,21 +15,34 @@ const STATIC_CACHE_TTL_MS = 30 * 60 * 1000
 export class CarrisClientService {
 	private readonly logger = new Logger(CarrisClientService.name)
 
-	private stopsCache: { data: CarrisStop[]; fetchedAt: number } | null = null
-	private linesCache: { data: CarrisLine[]; fetchedAt: number } | null = null
+	private stopsCache = new Map<string, { data: CarrisStop[]; fetchedAt: number }>()
+	private linesCache = new Map<string, { data: CarrisLine[]; fetchedAt: number }>()
+	private shapesCache = new Map<string, { data: CarrisShape; fetchedAt: number }>()
 
 	constructor(private readonly httpService: HttpService) {}
 
-	async getStops(): Promise<CarrisStop[]> {
-		if (this.stopsCache && Date.now() - this.stopsCache.fetchedAt < STATIC_CACHE_TTL_MS) {
-			return this.stopsCache.data
+	private async getCached<T>(
+		cache: Map<string, { data: T; fetchedAt: number }>,
+		key: string,
+		fetch: () => Promise<T>,
+	): Promise<T> {
+		const cached = cache.get(key)
+		if (cached && Date.now() - cached.fetchedAt < STATIC_CACHE_TTL_MS) {
+			return cached.data
 		}
 
-		const { data } = await firstValueFrom(
-			this.httpService.get<CarrisStop[]>('/stops'),
-		)
-		this.stopsCache = { data, fetchedAt: Date.now() }
+		const data = await fetch()
+		cache.set(key, { data, fetchedAt: Date.now() })
 		return data
+	}
+
+	async getStops(): Promise<CarrisStop[]> {
+		return this.getCached(this.stopsCache, 'all', async () => {
+			const { data } = await firstValueFrom(
+				this.httpService.get<CarrisStop[]>('/stops'),
+			)
+			return data
+		})
 	}
 
 	async getStopById(id: string): Promise<CarrisStop | null> {
@@ -37,15 +51,12 @@ export class CarrisClientService {
 	}
 
 	async getLines(): Promise<CarrisLine[]> {
-		if (this.linesCache && Date.now() - this.linesCache.fetchedAt < STATIC_CACHE_TTL_MS) {
-			return this.linesCache.data
-		}
-
-		const { data } = await firstValueFrom(
-			this.httpService.get<CarrisLine[]>('/lines'),
-		)
-		this.linesCache = { data, fetchedAt: Date.now() }
-		return data
+		return this.getCached(this.linesCache, 'all', async () => {
+			const { data } = await firstValueFrom(
+				this.httpService.get<CarrisLine[]>('/lines'),
+			)
+			return data
+		})
 	}
 
 	async getLineById(id: string): Promise<CarrisLine | null> {
@@ -58,6 +69,15 @@ export class CarrisClientService {
 			this.httpService.get<CarrisPattern[]>(`/patterns/${patternId}`),
 		)
 		return data[0] ?? null
+	}
+
+	async getShape(shapeId: string): Promise<CarrisShape> {
+		return this.getCached(this.shapesCache, shapeId, async () => {
+			const { data } = await firstValueFrom(
+				this.httpService.get<CarrisShape>(`/shapes/${shapeId}`),
+			)
+			return data
+		})
 	}
 
 	async getArrivalsByStop(stopId: string): Promise<CarrisArrival[]> {
