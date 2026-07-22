@@ -44,6 +44,14 @@ export class LineRouteStopDto {
 	scheduledArrival!: string | null
 }
 
+export class LineDirectionDto {
+	directionId!: number
+	headsign!: string
+}
+
 export class LineRouteResponseDto extends LineResponseDto {
+	directionId!: number
+	headsign!: string
+	directions!: LineDirectionDto[]
 	stops!: LineRouteStopDto[]
 }

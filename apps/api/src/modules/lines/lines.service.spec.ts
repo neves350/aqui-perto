@@ -300,6 +300,9 @@ describe('LinesService', () => {
 				longName: 'Alameda - Odivelas',
 				color: '#FF0000',
 				textColor: '#FFFFFF',
+				directionId: 0,
+				headsign: 'Odivelas',
+				directions: [{ directionId: 0, headsign: 'Odivelas' }],
 				stops: [
 					{
 						stopId: 'stopA',
@@ -393,6 +396,202 @@ describe('LinesService', () => {
 					lon: -9.136,
 					minutesUntilArrival: 5,
 					scheduledArrival: '10:05',
+				},
+			])
+		})
+
+		it('picks, among patterns for the same direction, the one with more coverage today (not just the first with any match)', async () => {
+			jest.useFakeTimers().setSystemTime(new Date('2026-07-22T10:00:00'))
+
+			mockCarris.getLineById.mockResolvedValue({
+				id: '2772',
+				short_name: '2772',
+				long_name: 'Campo Grande - Torres da Bela Vista',
+				color: '#C61D23',
+				text_color: '#FFFFFF',
+				route_ids: ['route1'],
+				// Listed first, but only has a single (sparse) trip group valid
+				// today - a naive "first pattern with any match" pick would wrongly
+				// choose this one, like the real Carris 2772 data does.
+				pattern_ids: ['sparse-pattern', 'rich-pattern'],
+			})
+			mockCarris.getPattern.mockImplementation((patternId: string) => {
+				if (patternId === 'sparse-pattern') {
+					return Promise.resolve({
+						id: 'sparse-pattern',
+						line_id: '2772',
+						route_id: 'route1',
+						direction_id: 1,
+						headsign: 'Campo Grande',
+						path: [{ stop_id: 'stopA', stop_sequence: 1, distance: 0 }],
+						trips: [
+							{
+								schedule: [
+									{
+										stop_id: 'stopA',
+										stop_sequence: 1,
+										arrival_time: '20:00:00',
+									},
+								],
+								trip_ids: ['trip-evening'],
+								service_ids: ['service-evening'],
+								valid_on: ['20260722'],
+							},
+						],
+					})
+				}
+				return Promise.resolve({
+					id: 'rich-pattern',
+					line_id: '2772',
+					route_id: 'route1',
+					direction_id: 1,
+					headsign: 'Campo Grande',
+					path: [{ stop_id: 'stopA', stop_sequence: 1, distance: 0 }],
+					trips: [
+						{
+							schedule: [
+								{ stop_id: 'stopA', stop_sequence: 1, arrival_time: '10:20:00' },
+							],
+							trip_ids: ['trip-morning'],
+							service_ids: ['service-weekday'],
+							valid_on: ['20260722'],
+						},
+						{
+							schedule: [
+								{ stop_id: 'stopA', stop_sequence: 1, arrival_time: '18:00:00' },
+							],
+							trip_ids: ['trip-evening'],
+							service_ids: ['service-weekday'],
+							valid_on: ['20260722'],
+						},
+					],
+				})
+			})
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'stopA',
+					long_name: 'Alameda',
+					short_name: null,
+					lat: 38.736,
+					lon: -9.136,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+			])
+
+			const result = await service.getRouteDetail('2772')
+
+			expect(result?.headsign).toBe('Campo Grande')
+			expect(result?.stops).toEqual([
+				{
+					stopId: 'stopA',
+					name: 'Alameda',
+					sequence: 1,
+					lat: 38.736,
+					lon: -9.136,
+					minutesUntilArrival: 20,
+					scheduledArrival: '10:20',
+				},
+			])
+		})
+
+		it('lists one entry per distinct direction and selects the requested direction', async () => {
+			jest.useFakeTimers().setSystemTime(new Date('2026-07-22T10:00:00'))
+
+			mockCarris.getLineById.mockResolvedValue({
+				id: '2772',
+				short_name: '2772',
+				long_name: 'Campo Grande - Torres da Bela Vista',
+				color: '#C61D23',
+				text_color: '#FFFFFF',
+				route_ids: ['route1'],
+				pattern_ids: ['dir1-pattern', 'dir0-pattern'],
+			})
+			mockCarris.getPattern.mockImplementation((patternId: string) => {
+				if (patternId === 'dir1-pattern') {
+					return Promise.resolve({
+						id: 'dir1-pattern',
+						line_id: '2772',
+						route_id: 'route1',
+						direction_id: 1,
+						headsign: 'Campo Grande',
+						path: [{ stop_id: 'stopA', stop_sequence: 1, distance: 0 }],
+						trips: [
+							{
+								schedule: [
+									{
+										stop_id: 'stopA',
+										stop_sequence: 1,
+										arrival_time: '10:05:00',
+									},
+								],
+								trip_ids: ['trip-dir1'],
+								service_ids: ['service1'],
+								valid_on: ['20260722'],
+							},
+						],
+					})
+				}
+				return Promise.resolve({
+					id: 'dir0-pattern',
+					line_id: '2772',
+					route_id: 'route1',
+					direction_id: 0,
+					headsign: 'Torres da Bela Vista',
+					path: [{ stop_id: 'stopB', stop_sequence: 1, distance: 0 }],
+					trips: [
+						{
+							schedule: [
+								{ stop_id: 'stopB', stop_sequence: 1, arrival_time: '10:10:00' },
+							],
+							trip_ids: ['trip-dir0'],
+							service_ids: ['service1'],
+							valid_on: ['20260722'],
+						},
+					],
+				})
+			})
+			mockCarris.getStops.mockResolvedValue([
+				{
+					id: 'stopA',
+					long_name: 'Alameda',
+					short_name: null,
+					lat: 38.736,
+					lon: -9.136,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+				{
+					id: 'stopB',
+					long_name: 'Odivelas',
+					short_name: null,
+					lat: 38.791,
+					lon: -9.183,
+					line_ids: [],
+					route_ids: [],
+					pattern_ids: [],
+				},
+			])
+
+			const result = await service.getRouteDetail('2772', 0)
+
+			expect(result?.directionId).toBe(0)
+			expect(result?.headsign).toBe('Torres da Bela Vista')
+			expect(result?.directions).toEqual([
+				{ directionId: 0, headsign: 'Torres da Bela Vista' },
+				{ directionId: 1, headsign: 'Campo Grande' },
+			])
+			expect(result?.stops).toEqual([
+				{
+					stopId: 'stopB',
+					name: 'Odivelas',
+					sequence: 1,
+					lat: 38.791,
+					lon: -9.183,
+					minutesUntilArrival: 10,
+					scheduledArrival: '10:10',
 				},
 			])
 		})

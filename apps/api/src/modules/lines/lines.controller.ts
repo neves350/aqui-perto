@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common'
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger'
 import { LineQueryDto } from './dto/line-query.dto'
+import { LineRouteQueryDto } from './dto/line-route-query.dto'
 import { LinesService } from './lines.service'
 
 @Controller('lines')
@@ -27,8 +28,11 @@ export class LinesController {
 	})
 	@ApiParam({ name: 'id', example: '4200_0' })
 	@ApiResponse({ status: 404, description: 'Line not found' })
-	async getRouteDetail(@Param('id') id: string) {
-		const route = await this.linesService.getRouteDetail(id)
+	async getRouteDetail(
+		@Param('id') id: string,
+		@Query() query: LineRouteQueryDto,
+	) {
+		const route = await this.linesService.getRouteDetail(id, query.direction)
 		if (!route) {
 			throw new NotFoundException(`Route for line ${id} not found`)
 		}

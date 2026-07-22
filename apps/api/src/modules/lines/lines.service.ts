@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { CarrisClientService } from 'src/integrations/carris/carris-client.service'
+import { CarrisPattern } from 'src/common/types/carris.types'
 import {
 	LineDetailResponseDto,
+	LineDirectionDto,
 	LineResponseDto,
 	LineRouteResponseDto,
 } from './dto/line-response.dto'
@@ -67,21 +69,40 @@ export class LinesService {
 		}
 	}
 
-	async getRouteDetail(id: string): Promise<LineRouteResponseDto | null> {
+	async getRouteDetail(
+		id: string,
+		direction?: number,
+	): Promise<LineRouteResponseDto | null> {
 		const line = await this.carrisClientService.getLineById(id)
 		if (!line) return null
 
-		const patternId = line.pattern_ids[0]
-		const pattern = patternId
-			? await this.carrisClientService.getPattern(patternId)
-			: null
-		if (!pattern) return null
+		const patterns = (
+			await Promise.all(
+				line.pattern_ids.map((patternId) =>
+					this.carrisClientService.getPattern(patternId),
+				),
+			)
+		).filter((pattern) => pattern !== null)
+		if (patterns.length === 0) return null
+
+		const now = new Date()
+		const today = this.formatAsYyyymmdd(now)
+
+		const directions = this.collectDirections(patterns)
+		const targetDirectionId = direction ?? directions[0]?.directionId
+		const patternsForDirection = patterns.filter(
+			(pattern) => pattern.direction_id === targetDirectionId,
+		)
+		if (patternsForDirection.length === 0) return null
+
+		const pattern = this.pickPatternWithMostCoverageToday(
+			patternsForDirection,
+			today,
+		)
 
 		const stops = await this.carrisClientService.getStops()
 		const stopById = new Map(stops.map((stop) => [stop.id, stop]))
 
-		const now = new Date()
-		const today = this.formatAsYyyymmdd(now)
 		const tripGroupsToday = pattern.trips.filter((trip) =>
 			trip.valid_on.includes(today),
 		)
@@ -103,6 +124,9 @@ export class LinesService {
 			longName: line.long_name,
 			color: line.color,
 			textColor: line.text_color,
+			directionId: pattern.direction_id,
+			headsign: pattern.headsign,
+			directions,
 			stops: [...pattern.path]
 				.sort((a, b) => a.stop_sequence - b.stop_sequence)
 				.map((pathStop) => {
@@ -125,6 +149,33 @@ export class LinesService {
 					}
 				}),
 		}
+	}
+
+	private pickPatternWithMostCoverageToday(
+		patterns: CarrisPattern[],
+		today: string,
+	): CarrisPattern {
+		const countValidTripGroups = (pattern: CarrisPattern) =>
+			pattern.trips.filter((trip) => trip.valid_on.includes(today)).length
+
+		return patterns.reduce((best, candidate) =>
+			countValidTripGroups(candidate) > countValidTripGroups(best)
+				? candidate
+				: best,
+		)
+	}
+
+	private collectDirections(patterns: CarrisPattern[]): LineDirectionDto[] {
+		const headsignByDirectionId = new Map<number, string>()
+		for (const pattern of patterns) {
+			if (!headsignByDirectionId.has(pattern.direction_id)) {
+				headsignByDirectionId.set(pattern.direction_id, pattern.headsign)
+			}
+		}
+
+		return [...headsignByDirectionId.entries()]
+			.sort(([a], [b]) => a - b)
+			.map(([directionId, headsign]) => ({ directionId, headsign }))
 	}
 
 	private findNextArrival(
