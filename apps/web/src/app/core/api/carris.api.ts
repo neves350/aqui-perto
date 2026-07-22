@@ -33,8 +33,10 @@ export class CarrisApi {
 		})
 	}
 
-	getLineRoute(lineId: string) {
-		return this.http.get<LineRoute>(`${this.baseUrl}/lines/${lineId}/route`)
+	getLineRoute(lineId: string, direction?: number) {
+		return this.http.get<LineRoute>(`${this.baseUrl}/lines/${lineId}/route`, {
+			params: direction === undefined ? {} : { direction },
+		})
 	}
 
 	getLineById(id: string) {

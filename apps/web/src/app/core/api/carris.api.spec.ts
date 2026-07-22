@@ -82,6 +82,34 @@ describe('CarrisApi', () => {
 			longName: 'Alameda - Odivelas',
 			color: '#FF0000',
 			textColor: '#FFFFFF',
+			directionId: 0,
+			headsign: 'Odivelas',
+			directions: [{ directionId: 0, headsign: 'Odivelas' }],
+			stops: [],
+		})
+	})
+
+	it('getLineRoute requests /lines/:id/route with a direction param when given', () => {
+		api.getLineRoute('4200_0', 1).subscribe()
+
+		const req = httpMock.expectOne(
+			(r) =>
+				r.url === `${environment.apiUrl}/lines/4200_0/route` &&
+				r.params.get('direction') === '1',
+		)
+		expect(req.request.method).toBe('GET')
+		req.flush({
+			id: '4200_0',
+			shortName: '758',
+			longName: 'Alameda - Odivelas',
+			color: '#FF0000',
+			textColor: '#FFFFFF',
+			directionId: 1,
+			headsign: 'Alameda',
+			directions: [
+				{ directionId: 0, headsign: 'Odivelas' },
+				{ directionId: 1, headsign: 'Alameda' },
+			],
 			stops: [],
 		})
 	})
