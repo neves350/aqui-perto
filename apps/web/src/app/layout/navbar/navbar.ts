@@ -16,6 +16,7 @@ import {
 	HlmSheetTitle,
 	HlmSheetTrigger,
 } from '@spartan-ng/helm/sheet'
+import { SearchOverlay } from '@/shared/components/search/search-overlay/search-overlay'
 
 @Component({
 	selector: 'app-navbar',
@@ -31,6 +32,7 @@ import {
 		HlmSheetPortal,
 		HlmSheetTitle,
 		HlmSheetTrigger,
+		SearchOverlay,
 	],
 	templateUrl: './navbar.html',
 	styles: `

@@ -1,0 +1,36 @@
+<hlm-dialog>
+	<button
+		hlmDialogTrigger
+		hlmBtn
+		size="icon"
+		variant="ghost"
+		class="cursor-pointer"
+		aria-label="Pesquisar"
+	>
+		<svg lucideSearch class="size-4"></svg>
+	</button>
+
+	<hlm-dialog-content
+		*hlmDialogPortal="let ctx"
+		class="flex max-h-[80vh] w-md max-w-[calc(100vw-2rem)] flex-col"
+	>
+		<div
+			hlmTabs
+			[tab]="activeTab()"
+			(tabActivated)="onTabActivated($event)"
+			class="flex flex-1 flex-col gap-3 overflow-hidden"
+		>
+			<div hlmTabsList>
+				<button hlmTabsTrigger="linha">Linha</button>
+				<button hlmTabsTrigger="paragem">Paragem</button>
+			</div>
+
+			<div hlmTabsContent="linha" class="flex-1 overflow-y-auto">
+				<app-line-search />
+			</div>
+			<div hlmTabsContent="paragem" class="flex-1 overflow-y-auto">
+				<app-stop-search />
+			</div>
+		</div>
+	</hlm-dialog-content>
+</hlm-dialog>
