@@ -22,7 +22,8 @@
       "@spartan-ng/helm/spinner": ["./src/app/shared/ui/spinner/src/index.ts"],
       "@spartan-ng/helm/tooltip": ["./src/app/shared/ui/tooltip/src/index.ts"],
       "@spartan-ng/helm/utils": ["./src/app/shared/ui/utils/src/index.ts"],
-      "@spartan-ng/helm/sheet": ["./src/app/shared/ui/sheet/src/index.ts"]
+      "@spartan-ng/helm/sheet": ["./src/app/shared/ui/sheet/src/index.ts"],
+      "@spartan-ng/helm/tabs": ["./src/app/shared/ui/tabs/src/index.ts"]
     }
   },
   "angularCompilerOptions": {
