@@ -10,9 +10,8 @@
 	}
 </ul>
 } @else {
-@for (group of groupedLines(); track group.color) {
 <ul>
-	@for (line of group.lines; track line.id) {
+	@for (line of sortedLines(); track line.id) {
 	<li class="mb-1">
 		<button hlmBtn type="button" variant="ghost" class="cursor-pointer" [routerLink]="['/lines', line.id]">
 			<span class="inline-flex items-center justify-center rounded px-2 py-1 text-sm font-bold"
@@ -24,5 +23,4 @@
 	</li>
 	}
 </ul>
-}
 }

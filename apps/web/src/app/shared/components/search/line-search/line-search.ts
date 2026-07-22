@@ -16,7 +16,7 @@ import {
 import { Line } from '@/shared/models/line.model'
 import { HlmButton } from '@/shared/ui/button/src'
 import { HlmInput } from '@/shared/ui/input/src'
-import { LineGroup, LinesState } from './line.interface'
+import { LinesState } from './line.interface'
 
 const DEBOUNCE_MS = 300
 
@@ -68,31 +68,11 @@ export class LineSearch {
 	readonly loading = computed(() => this.state().loading)
 	readonly lines = computed(() => this.state().lines)
 
-	readonly groupedLines = computed((): LineGroup[] => {
-		const byColor = new Map<string, Line[]>()
-		for (const line of this.lines()) {
-			const group = byColor.get(line.color)
-			if (group) {
-				group.push(line)
-			} else {
-				byColor.set(line.color, [line])
-			}
-		}
-
-		const groups = Array.from(
-			byColor,
-			([color, lines]): LineGroup => ({
-				color,
-				lines: [...lines].sort((a, b) =>
-					compareShortName(a.shortName, b.shortName),
-				),
-			}),
-		)
-
-		return groups.sort((a, b) =>
-			compareShortName(a.lines[0].shortName, b.lines[0].shortName),
-		)
-	})
+	readonly sortedLines = computed((): Line[] =>
+		[...this.lines()].sort((a, b) =>
+			compareShortName(a.shortName, b.shortName),
+		),
+	)
 
 	onQueryChange(value: string): void {
 		this.query.set(value)

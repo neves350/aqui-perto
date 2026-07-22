@@ -226,7 +226,7 @@ describe('LineSearch', () => {
 		expect(link.nativeElement.textContent).toContain('Ver percurso completo')
 	})
 
-	it('groups results by color, sorted ascending by shortName within each group, and orders groups by their lowest shortName', () => {
+	it('sorts results ascending by shortName, regardless of color', () => {
 		vi.useFakeTimers()
 		carrisServiceMock.searchLines.mockReturnValue(
 			of([
@@ -269,45 +269,11 @@ describe('LineSearch', () => {
 		vi.advanceTimersByTime(300)
 		fixture.detectChanges()
 
-		expect(component.groupedLines()).toEqual([
-			{
-				color: '#0000FF',
-				lines: [
-					{
-						id: 'blue-10',
-						shortName: '758',
-						longName: 'Blue ten',
-						color: '#0000FF',
-						textColor: '#FFFFFF',
-					},
-					{
-						id: 'blue-20',
-						shortName: '1250',
-						longName: 'Blue twenty',
-						color: '#0000FF',
-						textColor: '#FFFFFF',
-					},
-				],
-			},
-			{
-				color: '#FF0000',
-				lines: [
-					{
-						id: 'red-10',
-						shortName: '3001',
-						longName: 'Red ten',
-						color: '#FF0000',
-						textColor: '#FFFFFF',
-					},
-					{
-						id: 'red-20',
-						shortName: '4520',
-						longName: 'Red twenty',
-						color: '#FF0000',
-						textColor: '#FFFFFF',
-					},
-				],
-			},
+		expect(component.sortedLines().map((line) => line.shortName)).toEqual([
+			'758',
+			'1250',
+			'3001',
+			'4520',
 		])
 	})
 })
