@@ -112,6 +112,20 @@ describe('LineDetail', () => {
 		expect(component.route()).toBeNull()
 	})
 
+	it('shows the stops list in sequence order', () => {
+		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+
+		fixture = TestBed.createComponent(LineDetail)
+		fixture.componentRef.setInput('id', '4200_0')
+		fixture.detectChanges()
+
+		const stopLabels = fixture.debugElement
+			.queryAll(By.css('.line-detail__stop span:first-child'))
+			.map((debugEl) => debugEl.nativeElement.textContent.trim())
+
+		expect(stopLabels).toEqual(['1. Alameda', '2. Odivelas'])
+	})
+
 	it('shows the longName reordered to match the current direction headsign', () => {
 		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
 
