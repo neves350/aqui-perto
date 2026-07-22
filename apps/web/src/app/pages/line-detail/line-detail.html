@@ -1,0 +1,37 @@
+@if (loading()) {
+	<p>A carregar percurso...</p>
+} @else if (route(); as line) {
+	<div class="line-detail">
+		<header class="line-detail__header">
+			<a routerLink="/search">‹ Voltar</a>
+			<span
+				class="line-detail__badge"
+				[style.background]="line.color"
+				[style.color]="line.textColor"
+			>
+				{{ line.shortName }}
+			</span>
+			<h1>{{ line.longName }}</h1>
+		</header>
+
+		<div class="line-detail__map">
+			<app-map [center]="center()" [route]="mapRoute()" />
+		</div>
+
+		<h2>Paragens do percurso</h2>
+		<ul class="line-detail__stops">
+			@for (stop of line.stops; track stop.stopId) {
+				<li>
+					<span>{{ stop.sequence }}. {{ stop.name }}</span>
+					@if (stop.minutesUntilArrival !== null) {
+						<span>{{ stop.minutesUntilArrival }} min · {{ stop.scheduledArrival }}</span>
+					} @else {
+						<span>Sem horário previsto</span>
+					}
+				</li>
+			}
+		</ul>
+	</div>
+} @else {
+	<p>Não foi possível carregar o percurso desta linha.</p>
+}
