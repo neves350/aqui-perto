@@ -376,5 +376,67 @@ describe('PathService', () => {
 
 			expect(mockCarris.getPattern).toHaveBeenCalledTimes(1)
 		})
+
+		it('retries after a 429 rate-limit response from the Carris API', async () => {
+			const line = buildLine({ id: 'L1', pattern_ids: ['P1'] })
+			patternsById.P1 = buildPattern({
+				id: 'P1',
+				line_id: 'L1',
+				path: [
+					{ stop_id: 'A', stop_sequence: 1, distance: 0 },
+					{ stop_id: 'C', stop_sequence: 2, distance: 1000 },
+				],
+				trips: [
+					{
+						trip_ids: ['T1'],
+						service_ids: ['S1'],
+						valid_on: [TODAY],
+						schedule: [
+							{ stop_id: 'A', stop_sequence: 1, arrival_time: '08:00:00' },
+							{ stop_id: 'C', stop_sequence: 2, arrival_time: '08:20:00' },
+						],
+					},
+				],
+			})
+			const rateLimitError = Object.assign(new Error('Rate limited'), {
+				isAxiosError: true,
+				response: { status: 429, headers: { 'retry-after': '0.001' } },
+			})
+			mockCarris.getPattern.mockImplementationOnce(() =>
+				Promise.reject(rateLimitError),
+			)
+			mockCarris.getLines.mockResolvedValue([line])
+
+			const result = await service.findPath('A', 'C', REFERENCE_TIME)
+
+			expect(result.found).toBe(true)
+			expect(mockCarris.getPattern).toHaveBeenCalledTimes(2)
+		})
+
+		it('limits concurrent pattern fetches to avoid rate-limiting the Carris API', async () => {
+			const patternIds = Array.from({ length: 12 }, (_, i) => `P${i}`)
+			const line = buildLine({ id: 'L1', pattern_ids: patternIds })
+			mockCarris.getLines.mockResolvedValue([line])
+
+			let concurrent = 0
+			let maxConcurrent = 0
+			mockCarris.getPattern.mockImplementation(async (patternId: string) => {
+				concurrent++
+				maxConcurrent = Math.max(maxConcurrent, concurrent)
+				await new Promise((resolve) => setTimeout(resolve, 5))
+				concurrent--
+				return buildPattern({
+					id: patternId,
+					line_id: 'L1',
+					path: [],
+					trips: [],
+				})
+			})
+
+			await service.findPath('A', 'C', REFERENCE_TIME)
+
+			expect(mockCarris.getPattern).toHaveBeenCalledTimes(12)
+			expect(maxConcurrent).toBeLessThanOrEqual(5)
+		})
 	})
 })
