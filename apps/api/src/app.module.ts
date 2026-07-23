@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config'
 import { CarrisModule } from './integrations/carris/carris.module'
 import { ArrivalsModule } from './modules/arrivals/arrivals.module'
 import { LinesModule } from './modules/lines/lines.module'
+import { PathModule } from './modules/path/path.module'
 import { StopsModule } from './modules/stops/stops.module'
 
 @Module({
@@ -12,6 +13,7 @@ import { StopsModule } from './modules/stops/stops.module'
 		StopsModule,
 		LinesModule,
 		ArrivalsModule,
+		PathModule,
 	],
 	controllers: [],
 	providers: [],
