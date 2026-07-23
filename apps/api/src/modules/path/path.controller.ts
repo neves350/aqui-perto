@@ -9,7 +9,7 @@ export class PathController {
 	constructor(private readonly pathService: PathService) {}
 
 	@Get()
-	@ApiOperation({ summary: 'Plan a trip between two stops (0-1 transfer)' })
+	@ApiOperation({ summary: 'Plan a trip between two stops (up to 2 transfers)' })
 	@ApiResponse({
 		status: 400,
 		description: 'originStopId and destinationStopId must differ',

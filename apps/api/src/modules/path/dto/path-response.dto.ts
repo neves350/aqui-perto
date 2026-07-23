@@ -7,12 +7,16 @@ export class PathLegDto {
 	arrivalTime!: string
 }
 
-export type PathNotFoundReason = 'no-0-1-transfer-combination'
+export class PathOptionDto {
+	legs!: PathLegDto[]
+	totalTimeMinutes!: number
+	estimatedFare?: number
+}
+
+export type PathNotFoundReason = 'no-path-found'
 
 export class PathResultDto {
 	found!: boolean
 	reason?: PathNotFoundReason
-	legs?: PathLegDto[]
-	totalTimeMinutes?: number
-	estimatedFare?: number
+	results?: PathOptionDto[]
 }

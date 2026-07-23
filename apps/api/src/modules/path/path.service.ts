@@ -10,10 +10,15 @@ import {
 	toDateWithGtfsTime,
 } from 'src/common/utils/gtfs-time'
 import { CarrisClientService } from 'src/integrations/carris/carris-client.service'
-import { PathLegDto, PathResultDto } from './dto/path-response.dto'
+import {
+	PathLegDto,
+	PathOptionDto,
+	PathResultDto,
+} from './dto/path-response.dto'
 import { getEstimatedFare } from './fare.const'
 
 const MIN_TRANSFER_MINUTES = 2
+const MAX_RESULTS = 5
 const PATTERN_CACHE_TTL_MS = 30 * 60 * 1000
 const PATTERN_FETCH_CONCURRENCY = 5
 const RATE_LIMIT_RETRIES = 3
@@ -34,6 +39,25 @@ interface LegCandidate {
 interface PathCandidate {
 	legs: LegCandidate[]
 	totalMinutes: number
+}
+
+interface LinePatterns {
+	line: CarrisLine
+	patterns: CarrisPattern[]
+}
+
+// Lookups shared by every round of the search.
+interface SearchContext {
+	linePatternsById: Map<string, LinePatterns>
+	stopsToLineIds: Map<string, Set<string>>
+	destinationStopId: string
+	dateStr: string
+}
+
+// A 2-leg journey (origin -> ... -> transfer stop) used as the seed for a 3rd leg.
+interface TwoLegSeed {
+	legA: LegCandidate
+	legB: LegCandidate
 }
 
 @Injectable()
@@ -65,7 +89,65 @@ export class PathService {
 				patterns: await this.getPatternsForLine(line),
 			})),
 		)
+		const context: SearchContext = {
+			linePatternsById: new Map(
+				linePatterns.map((entry) => [entry.line.id, entry]),
+			),
+			stopsToLineIds: this.buildStopToLineIds(linePatterns),
+			destinationStopId,
+			dateStr,
+		}
 
+		const directCandidates = this.findDirectCandidates(
+			linePatterns,
+			originStopId,
+			destinationStopId,
+			dateStr,
+			referenceTime,
+		)
+
+		const { candidates: oneTransferCandidates, seeds: twoLegSeeds } =
+			this.findOneTransferCandidatesAndSeeds(
+				linePatterns,
+				context,
+				originStopId,
+				referenceTime,
+			)
+
+		const twoTransferCandidates = this.findTwoTransferCandidates(
+			twoLegSeeds,
+			context,
+		)
+
+		const candidates = [
+			...directCandidates,
+			...oneTransferCandidates,
+			...twoTransferCandidates,
+		]
+
+		if (candidates.length === 0) {
+			return { found: false, reason: 'no-path-found' }
+		}
+
+		const sorted = [...candidates].sort(
+			(a, b) => a.totalMinutes - b.totalMinutes,
+		)
+		const topResults = this.dedupeBySequence(sorted).slice(0, MAX_RESULTS)
+
+		return {
+			found: true,
+			results: topResults.map((candidate) => this.toOptionDto(candidate)),
+		}
+	}
+
+	// Round 0: direct routes (0 transfers).
+	private findDirectCandidates(
+		linePatterns: LinePatterns[],
+		originStopId: string,
+		destinationStopId: string,
+		dateStr: string,
+		referenceTime: Date,
+	): PathCandidate[] {
 		const candidates: PathCandidate[] = []
 
 		for (const { line, patterns } of linePatterns) {
@@ -84,84 +166,222 @@ export class PathService {
 			})
 		}
 
-		const stopIdsByLineId = new Map(
-			linePatterns.map(({ line, patterns }) => [
-				line.id,
-				this.collectStopIds(patterns),
-			]),
-		)
+		return candidates
+	}
+
+	// Round 1: 1-transfer routes, plus 2-leg seeds for Round 2.
+	private findOneTransferCandidatesAndSeeds(
+		linePatterns: LinePatterns[],
+		context: SearchContext,
+		originStopId: string,
+		referenceTime: Date,
+	): { candidates: PathCandidate[]; seeds: TwoLegSeed[] } {
+		const { linePatternsById, stopsToLineIds, destinationStopId, dateStr } =
+			context
+		const candidates: PathCandidate[] = []
+		const seeds: TwoLegSeed[] = []
 
 		for (const { line: lineA, patterns: patternsA } of linePatterns) {
-			const stopsA = stopIdsByLineId.get(lineA.id) ?? new Set<string>()
+			const transferStops = this.getReachableTransferStops(
+				patternsA,
+				originStopId,
+				stopsToLineIds,
+			)
 
-			for (const { line: lineB, patterns: patternsB } of linePatterns) {
-				if (lineA.id === lineB.id) continue
-				const stopsB = stopIdsByLineId.get(lineB.id) ?? new Set<string>()
+			for (const stop1 of transferStops) {
+				const legATrip = this.findEarliestTrip(
+					patternsA,
+					originStopId,
+					stop1,
+					dateStr,
+					referenceTime,
+				)
+				if (!legATrip) continue
 
-				const transferStopIds = [...stopsA].filter((stopId) =>
-					stopsB.has(stopId),
+				const legA: LegCandidate = {
+					line: lineA,
+					originStopId,
+					destinationStopId: stop1,
+					trip: legATrip,
+				}
+				const notBefore = this.addMinutes(
+					legATrip.arrival,
+					MIN_TRANSFER_MINUTES,
 				)
 
-				for (const transferStopId of transferStopIds) {
-					const legATrip = this.findEarliestTrip(
-						patternsA,
-						originStopId,
-						transferStopId,
-						dateStr,
-						referenceTime,
-					)
-					if (!legATrip) continue
+				for (const lineBId of stopsToLineIds.get(stop1) ?? []) {
+					if (lineBId === lineA.id) continue
+					const lineBEntry = linePatternsById.get(lineBId)
+					if (!lineBEntry) continue
+					const { line: lineB, patterns: patternsB } = lineBEntry
 
-					const legBNotBefore = this.addMinutes(
-						legATrip.arrival,
-						MIN_TRANSFER_MINUTES,
-					)
-					const legBTrip = this.findEarliestTrip(
+					const legBToDestTrip = this.findEarliestTrip(
 						patternsB,
-						transferStopId,
+						stop1,
 						destinationStopId,
 						dateStr,
-						legBNotBefore,
+						notBefore,
 					)
-					if (!legBTrip) continue
+					if (legBToDestTrip) {
+						const legB: LegCandidate = {
+							line: lineB,
+							originStopId: stop1,
+							destinationStopId,
+							trip: legBToDestTrip,
+						}
+						candidates.push({
+							legs: [legA, legB],
+							totalMinutes: this.diffMinutes(
+								legBToDestTrip.arrival,
+								legATrip.departure,
+							),
+						})
+					}
 
-					candidates.push({
-						legs: [
-							{
-								line: lineA,
-								originStopId,
-								destinationStopId: transferStopId,
-								trip: legATrip,
-							},
-							{
+					const transferStops2 = this.getReachableTransferStops(
+						patternsB,
+						stop1,
+						stopsToLineIds,
+					)
+					for (const stop2 of transferStops2) {
+						const legBTrip = this.findEarliestTrip(
+							patternsB,
+							stop1,
+							stop2,
+							dateStr,
+							notBefore,
+						)
+						if (!legBTrip) continue
+
+						seeds.push({
+							legA,
+							legB: {
 								line: lineB,
-								originStopId: transferStopId,
-								destinationStopId,
+								originStopId: stop1,
+								destinationStopId: stop2,
 								trip: legBTrip,
 							},
-						],
-						totalMinutes: this.diffMinutes(
-							legBTrip.arrival,
-							legATrip.departure,
-						),
-					})
+						})
+					}
 				}
 			}
 		}
 
-		if (candidates.length === 0) {
-			return { found: false, reason: 'no-0-1-transfer-combination' }
+		return { candidates, seeds }
+	}
+
+	// Round 2: 2-transfer routes, extending the seeds collected in Round 1 with a 3rd leg.
+	private findTwoTransferCandidates(
+		seeds: TwoLegSeed[],
+		context: SearchContext,
+	): PathCandidate[] {
+		const { linePatternsById, stopsToLineIds, destinationStopId, dateStr } =
+			context
+		const candidates: PathCandidate[] = []
+
+		for (const { legA, legB } of seeds) {
+			const stop2 = legB.destinationStopId
+			const notBefore = this.addMinutes(legB.trip.arrival, MIN_TRANSFER_MINUTES)
+
+			for (const lineCId of stopsToLineIds.get(stop2) ?? []) {
+				if (lineCId === legB.line.id) continue
+				const lineCEntry = linePatternsById.get(lineCId)
+				if (!lineCEntry) continue
+				const { line: lineC, patterns: patternsC } = lineCEntry
+
+				const legCTrip = this.findEarliestTrip(
+					patternsC,
+					stop2,
+					destinationStopId,
+					dateStr,
+					notBefore,
+				)
+				if (!legCTrip) continue
+
+				candidates.push({
+					legs: [
+						legA,
+						legB,
+						{
+							line: lineC,
+							originStopId: stop2,
+							destinationStopId,
+							trip: legCTrip,
+						},
+					],
+					totalMinutes: this.diffMinutes(legCTrip.arrival, legA.trip.departure),
+				})
+			}
 		}
 
-		const best = candidates.reduce((fastest, candidate) =>
-			candidate.totalMinutes < fastest.totalMinutes ? candidate : fastest,
-		)
+		return candidates
+	}
 
+	// Only the earliest trip per Linha+Paragem is kept: an earlier arrival
+	// never yields a worse onward connection, so nothing is lost.
+
+	/** Stops reachable, in at least one pattern, after `afterStopId`, that are also served by another line. */
+	private getReachableTransferStops(
+		patterns: CarrisPattern[],
+		afterStopId: string,
+		stopsToLineIds: Map<string, Set<string>>,
+	): string[] {
+		const result = new Set<string>()
+
+		for (const pattern of patterns) {
+			const afterEntry = pattern.path.find((s) => s.stop_id === afterStopId)
+			if (!afterEntry) continue
+
+			for (const stop of pattern.path) {
+				if (stop.stop_sequence <= afterEntry.stop_sequence) continue
+				const lineIds = stopsToLineIds.get(stop.stop_id)
+				if (lineIds && lineIds.size > 1) {
+					result.add(stop.stop_id)
+				}
+			}
+		}
+
+		return [...result]
+	}
+
+	private buildStopToLineIds(
+		linePatterns: LinePatterns[],
+	): Map<string, Set<string>> {
+		const map = new Map<string, Set<string>>()
+
+		for (const { line, patterns } of linePatterns) {
+			for (const pattern of patterns) {
+				for (const stop of pattern.path) {
+					const lineIds = map.get(stop.stop_id) ?? new Set<string>()
+					lineIds.add(line.id)
+					map.set(stop.stop_id, lineIds)
+				}
+			}
+		}
+
+		return map
+	}
+
+	// Keeps the fastest candidate per distinct line sequence; input must be sorted ascending.
+	private dedupeBySequence(candidates: PathCandidate[]): PathCandidate[] {
+		const seen = new Set<string>()
+		const result: PathCandidate[] = []
+
+		for (const candidate of candidates) {
+			const key = candidate.legs.map((leg) => leg.line.id).join('>')
+			if (seen.has(key)) continue
+			seen.add(key)
+			result.push(candidate)
+		}
+
+		return result
+	}
+
+	private toOptionDto(candidate: PathCandidate): PathOptionDto {
 		return {
-			found: true,
-			legs: best.legs.map((leg) => this.toLegDto(leg)),
-			totalTimeMinutes: best.totalMinutes,
-			estimatedFare: this.estimateFare(best.legs),
+			legs: candidate.legs.map((leg) => this.toLegDto(leg)),
+			totalTimeMinutes: candidate.totalMinutes,
+			estimatedFare: this.estimateFare(candidate.legs),
 		}
 	}
 
@@ -245,16 +465,6 @@ export class PathService {
 
 	private delay(ms: number): Promise<void> {
 		return new Promise((resolve) => setTimeout(resolve, ms))
-	}
-
-	private collectStopIds(patterns: CarrisPattern[]): Set<string> {
-		const stopIds = new Set<string>()
-		for (const pattern of patterns) {
-			for (const stop of pattern.path) {
-				stopIds.add(stop.stop_id)
-			}
-		}
-		return stopIds
 	}
 
 	private findEarliestTrip(

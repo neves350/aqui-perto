@@ -89,15 +89,17 @@ describe('PathService', () => {
 			const result = await service.findPath('A', 'C', REFERENCE_TIME)
 
 			expect(result.found).toBe(true)
-			expect(result.legs).toHaveLength(1)
-			expect(result.legs?.[0]).toMatchObject({
+			expect(result.results).toHaveLength(1)
+			const option = result.results?.[0]
+			expect(option?.legs).toHaveLength(1)
+			expect(option?.legs[0]).toMatchObject({
 				lineId: 'L1',
 				originStopId: 'A',
 				destinationStopId: 'C',
 				departureTime: '08:00',
 				arrivalTime: '08:20',
 			})
-			expect(result.totalTimeMinutes).toBe(20)
+			expect(option?.totalTimeMinutes).toBe(20)
 		})
 
 		it('prefers a faster 1-transfer route over a slower direct route', async () => {
@@ -168,14 +170,15 @@ describe('PathService', () => {
 			const result = await service.findPath('A', 'D', REFERENCE_TIME)
 
 			expect(result.found).toBe(true)
-			expect(result.totalTimeMinutes).toBe(30)
-			expect(result.legs).toHaveLength(2)
-			expect(result.legs?.[0]).toMatchObject({
+			const fastest = result.results?.[0]
+			expect(fastest?.totalTimeMinutes).toBe(30)
+			expect(fastest?.legs).toHaveLength(2)
+			expect(fastest?.legs[0]).toMatchObject({
 				lineId: 'LEGA',
 				originStopId: 'A',
 				destinationStopId: 'B',
 			})
-			expect(result.legs?.[1]).toMatchObject({
+			expect(fastest?.legs[1]).toMatchObject({
 				lineId: 'LEGB',
 				originStopId: 'B',
 				destinationStopId: 'D',
@@ -241,7 +244,7 @@ describe('PathService', () => {
 			const result = await service.findPath('A', 'D', REFERENCE_TIME)
 
 			expect(result.found).toBe(true)
-			expect(result.legs?.[1]).toMatchObject({
+			expect(result.results?.[0]?.legs[1]).toMatchObject({
 				departureTime: '08:12',
 				arrivalTime: '08:25',
 			})
@@ -273,7 +276,7 @@ describe('PathService', () => {
 			const result = await service.findPath('A', 'C', REFERENCE_TIME)
 
 			expect(result.found).toBe(false)
-			expect(result.reason).toBe('no-0-1-transfer-combination')
+			expect(result.reason).toBe('no-path-found')
 		})
 
 		it('ignores trips that already departed before the requested departure time', async () => {
@@ -311,13 +314,13 @@ describe('PathService', () => {
 			const result = await service.findPath('A', 'C', REFERENCE_TIME)
 
 			expect(result.found).toBe(true)
-			expect(result.legs?.[0]).toMatchObject({
+			expect(result.results?.[0]?.legs[0]).toMatchObject({
 				departureTime: '08:30',
 				arrivalTime: '08:50',
 			})
 		})
 
-		it('returns found: false with an explicit reason when there is no direct or 1-transfer combination', async () => {
+		it('returns found: false with an explicit reason when there is no combination up to 2 transfers', async () => {
 			const line = buildLine({ id: 'L1', pattern_ids: ['P1'] })
 			patternsById.P1 = buildPattern({
 				id: 'P1',
@@ -344,8 +347,208 @@ describe('PathService', () => {
 
 			expect(result).toEqual({
 				found: false,
-				reason: 'no-0-1-transfer-combination',
+				reason: 'no-path-found',
 			})
+		})
+
+		it('finds a 2-transfer route when no direct or 1-transfer combination exists', async () => {
+			const legALine = buildLine({ id: 'LEGA', pattern_ids: ['PA'] })
+			const legBLine = buildLine({ id: 'LEGB', pattern_ids: ['PB'] })
+			const legCLine = buildLine({ id: 'LEGC', pattern_ids: ['PC'] })
+
+			patternsById.PA = buildPattern({
+				id: 'PA',
+				line_id: 'LEGA',
+				path: [
+					{ stop_id: 'A', stop_sequence: 1, distance: 0 },
+					{ stop_id: 'B', stop_sequence: 2, distance: 500 },
+				],
+				trips: [
+					{
+						trip_ids: ['TA'],
+						service_ids: ['S1'],
+						valid_on: [TODAY],
+						schedule: [
+							{ stop_id: 'A', stop_sequence: 1, arrival_time: '08:00:00' },
+							{ stop_id: 'B', stop_sequence: 2, arrival_time: '08:10:00' },
+						],
+					},
+				],
+			})
+			patternsById.PB = buildPattern({
+				id: 'PB',
+				line_id: 'LEGB',
+				path: [
+					{ stop_id: 'B', stop_sequence: 1, distance: 0 },
+					{ stop_id: 'C', stop_sequence: 2, distance: 500 },
+				],
+				trips: [
+					{
+						trip_ids: ['TB'],
+						service_ids: ['S1'],
+						valid_on: [TODAY],
+						schedule: [
+							{ stop_id: 'B', stop_sequence: 1, arrival_time: '08:12:00' },
+							{ stop_id: 'C', stop_sequence: 2, arrival_time: '08:20:00' },
+						],
+					},
+				],
+			})
+			patternsById.PC = buildPattern({
+				id: 'PC',
+				line_id: 'LEGC',
+				path: [
+					{ stop_id: 'C', stop_sequence: 1, distance: 0 },
+					{ stop_id: 'D', stop_sequence: 2, distance: 500 },
+				],
+				trips: [
+					{
+						trip_ids: ['TC'],
+						service_ids: ['S1'],
+						valid_on: [TODAY],
+						schedule: [
+							{ stop_id: 'C', stop_sequence: 1, arrival_time: '08:22:00' },
+							{ stop_id: 'D', stop_sequence: 2, arrival_time: '08:30:00' },
+						],
+					},
+				],
+			})
+
+			mockCarris.getLines.mockResolvedValue([legALine, legBLine, legCLine])
+
+			const result = await service.findPath('A', 'D', REFERENCE_TIME)
+
+			expect(result.found).toBe(true)
+			const option = result.results?.[0]
+			expect(option?.totalTimeMinutes).toBe(30)
+			expect(option?.legs).toHaveLength(3)
+			expect(option?.legs.map((leg) => leg.lineId)).toEqual([
+				'LEGA',
+				'LEGB',
+				'LEGC',
+			])
+		})
+
+		it('returns at most 5 results, ordered by total time', async () => {
+			const arrivalTimes = [
+				'08:10:00',
+				'08:11:00',
+				'08:12:00',
+				'08:13:00',
+				'08:14:00',
+				'08:15:00',
+				'08:16:00',
+			]
+			const lines = arrivalTimes.map((arrivalTime, i) => {
+				const lineId = `L${i}`
+				const patternId = `P${i}`
+				patternsById[patternId] = buildPattern({
+					id: patternId,
+					line_id: lineId,
+					path: [
+						{ stop_id: 'A', stop_sequence: 1, distance: 0 },
+						{ stop_id: 'C', stop_sequence: 2, distance: 1000 },
+					],
+					trips: [
+						{
+							trip_ids: [`T${i}`],
+							service_ids: ['S1'],
+							valid_on: [TODAY],
+							schedule: [
+								{ stop_id: 'A', stop_sequence: 1, arrival_time: '08:00:00' },
+								{ stop_id: 'C', stop_sequence: 2, arrival_time: arrivalTime },
+							],
+						},
+					],
+				})
+				return buildLine({ id: lineId, pattern_ids: [patternId] })
+			})
+			mockCarris.getLines.mockResolvedValue(lines)
+
+			const result = await service.findPath('A', 'C', REFERENCE_TIME)
+
+			expect(result.found).toBe(true)
+			expect(result.results).toHaveLength(5)
+			expect(result.results?.map((option) => option.totalTimeMinutes)).toEqual(
+				[10, 11, 12, 13, 14],
+			)
+		})
+
+		it('deduplicates candidates that use the same sequence of lines, keeping only the fastest', async () => {
+			const legALine = buildLine({ id: 'LEGA', pattern_ids: ['PA'] })
+			const legBLine = buildLine({ id: 'LEGB', pattern_ids: ['PB1', 'PB2'] })
+
+			patternsById.PA = buildPattern({
+				id: 'PA',
+				line_id: 'LEGA',
+				path: [
+					{ stop_id: 'A', stop_sequence: 1, distance: 0 },
+					{ stop_id: 'B', stop_sequence: 2, distance: 500 },
+					{ stop_id: 'E', stop_sequence: 3, distance: 1500 },
+				],
+				trips: [
+					{
+						trip_ids: ['TA'],
+						service_ids: ['S1'],
+						valid_on: [TODAY],
+						schedule: [
+							{ stop_id: 'A', stop_sequence: 1, arrival_time: '08:00:00' },
+							{ stop_id: 'B', stop_sequence: 2, arrival_time: '08:10:00' },
+							{ stop_id: 'E', stop_sequence: 3, arrival_time: '08:25:00' },
+						],
+					},
+				],
+			})
+			patternsById.PB1 = buildPattern({
+				id: 'PB1',
+				line_id: 'LEGB',
+				path: [
+					{ stop_id: 'B', stop_sequence: 1, distance: 0 },
+					{ stop_id: 'D', stop_sequence: 2, distance: 500 },
+				],
+				trips: [
+					{
+						trip_ids: ['TB1'],
+						service_ids: ['S1'],
+						valid_on: [TODAY],
+						schedule: [
+							{ stop_id: 'B', stop_sequence: 1, arrival_time: '08:12:00' },
+							{ stop_id: 'D', stop_sequence: 2, arrival_time: '08:20:00' },
+						],
+					},
+				],
+			})
+			patternsById.PB2 = buildPattern({
+				id: 'PB2',
+				line_id: 'LEGB',
+				path: [
+					{ stop_id: 'E', stop_sequence: 1, distance: 0 },
+					{ stop_id: 'D', stop_sequence: 2, distance: 500 },
+				],
+				trips: [
+					{
+						trip_ids: ['TB2'],
+						service_ids: ['S1'],
+						valid_on: [TODAY],
+						schedule: [
+							{ stop_id: 'E', stop_sequence: 1, arrival_time: '08:30:00' },
+							{ stop_id: 'D', stop_sequence: 2, arrival_time: '08:45:00' },
+						],
+					},
+				],
+			})
+
+			mockCarris.getLines.mockResolvedValue([legALine, legBLine])
+
+			const result = await service.findPath('A', 'D', REFERENCE_TIME)
+
+			expect(result.found).toBe(true)
+			const sameSequence = result.results?.filter(
+				(option) =>
+					option.legs.map((leg) => leg.lineId).join('>') === 'LEGA>LEGB',
+			)
+			expect(sameSequence).toHaveLength(1)
+			expect(sameSequence?.[0].totalTimeMinutes).toBe(20)
 		})
 
 		it('caches patterns so the same pattern is not fetched more than once per line', async () => {
