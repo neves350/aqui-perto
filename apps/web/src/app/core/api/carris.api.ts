@@ -4,6 +4,7 @@ import { environment } from '@environments/environment.development'
 import { Arrival } from '@/shared/models/arrival.model'
 import { Line } from '@/shared/models/line.model'
 import { LineRoute } from '@/shared/models/line-route.model'
+import { PathQuery, PathResult } from '@/shared/models/path.model'
 import { Stop } from '@/shared/models/stop.model'
 
 @Service()
@@ -46,6 +47,12 @@ export class CarrisApi {
 	getArrivals(stopId: string) {
 		return this.http.get<Arrival[]>(`${this.baseUrl}/arrivals`, {
 			params: { stopId },
+		})
+	}
+
+	getPath(query: PathQuery) {
+		return this.http.get<PathResult>(`${this.baseUrl}/path`, {
+			params: { ...query },
 		})
 	}
 }

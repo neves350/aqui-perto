@@ -1,5 +1,6 @@
 import { inject, Service } from '@angular/core'
 import { CarrisApi } from '@core/api/carris.api'
+import { PathQuery } from '@/shared/models/path.model'
 
 @Service()
 export class CarrisService {
@@ -31,5 +32,9 @@ export class CarrisService {
 
 	getArrivals(stopId: string) {
 		return this.carrisApi.getArrivals(stopId)
+	}
+
+	getPath(query: PathQuery) {
+		return this.carrisApi.getPath(query)
 	}
 }

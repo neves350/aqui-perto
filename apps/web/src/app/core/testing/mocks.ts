@@ -28,6 +28,7 @@ export const carrisServiceMock = {
 	getLineRoute: vi.fn(),
 	getLineById: vi.fn(),
 	getArrivals: vi.fn(),
+	getPath: vi.fn(),
 }
 
 export const geolocationServiceMock = {

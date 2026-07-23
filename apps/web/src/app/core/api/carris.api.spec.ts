@@ -128,6 +128,56 @@ describe('CarrisApi', () => {
 		})
 	})
 
+	it('getPath requests /path with originStopId/destinationStopId params', () => {
+		api
+			.getPath({ originStopId: '070001', destinationStopId: '070002' })
+			.subscribe()
+
+		const req = httpMock.expectOne(
+			(r) =>
+				r.url === `${environment.apiUrl}/path` &&
+				r.params.get('originStopId') === '070001' &&
+				r.params.get('destinationStopId') === '070002' &&
+				!r.params.has('departureTime'),
+		)
+		expect(req.request.method).toBe('GET')
+		req.flush({ found: false, reason: 'no-0-1-transfer-combination' })
+	})
+
+	it('getPath requests /path with a departureTime param when given', () => {
+		api
+			.getPath({
+				originStopId: '070001',
+				destinationStopId: '070002',
+				departureTime: '2026-07-23T08:00:00',
+			})
+			.subscribe()
+
+		const req = httpMock.expectOne(
+			(r) =>
+				r.url === `${environment.apiUrl}/path` &&
+				r.params.get('originStopId') === '070001' &&
+				r.params.get('destinationStopId') === '070002' &&
+				r.params.get('departureTime') === '2026-07-23T08:00:00',
+		)
+		expect(req.request.method).toBe('GET')
+		req.flush({
+			found: true,
+			legs: [
+				{
+					lineId: '4200_0',
+					lineName: '758',
+					originStopId: '070001',
+					destinationStopId: '070002',
+					departureTime: '08:00',
+					arrivalTime: '08:20',
+				},
+			],
+			totalTimeMinutes: 20,
+			estimatedFare: 1.3,
+		})
+	})
+
 	it('getArrivals requests /arrivals with stopId param', () => {
 		api.getArrivals('070001').subscribe()
 
