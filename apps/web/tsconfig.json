@@ -30,7 +30,8 @@
       "@spartan-ng/helm/select": ["./src/app/shared/ui/select/src/index.ts"],
       "@spartan-ng/helm/popover": ["./src/app/shared/ui/popover/src/index.ts"],
       "@spartan-ng/helm/input-group": ["./src/app/shared/ui/input-group/src/index.ts"],
-      "@spartan-ng/helm/textarea": ["./src/app/shared/ui/textarea/src/index.ts"]
+      "@spartan-ng/helm/textarea": ["./src/app/shared/ui/textarea/src/index.ts"],
+      "@spartan-ng/helm/autocomplete": ["./src/app/shared/ui/autocomplete/src/index.ts"]
     }
   },
   "angularCompilerOptions": {
