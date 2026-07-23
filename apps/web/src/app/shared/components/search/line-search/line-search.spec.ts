@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing'
 import { By } from '@angular/platform-browser'
-import { provideRouter } from '@angular/router'
+import { provideRouter, RouterLink } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
 import { carrisServiceMock } from '@core/testing/mocks'
 import { of, Subject } from 'rxjs'
@@ -184,19 +184,7 @@ describe('LineSearch', () => {
 		])
 	})
 
-	it('toggles the selected line', () => {
-		fixture = TestBed.createComponent(LineSearch)
-		component = fixture.componentInstance
-		fixture.detectChanges()
-
-		component.toggleLine('4200_0')
-		expect(component.selectedLineId()).toBe('4200_0')
-
-		component.toggleLine('4200_0')
-		expect(component.selectedLineId()).toBeNull()
-	})
-
-	it('shows a link to the full route when a result is expanded', () => {
+	it('links to the line route', () => {
 		vi.useFakeTimers()
 		carrisServiceMock.searchLines.mockReturnValue(
 			of([
@@ -218,12 +206,12 @@ describe('LineSearch', () => {
 		vi.advanceTimersByTime(300)
 		fixture.detectChanges()
 
-		component.toggleLine('4200_0')
-		fixture.detectChanges()
-
-		const link = fixture.debugElement.query(By.css('a[href="/lines/4200_0"]'))
+		const link = fixture.debugElement.query(By.directive(RouterLink))
 		expect(link).not.toBeNull()
-		expect(link.nativeElement.textContent).toContain('Ver percurso completo')
+		expect(link.injector.get(RouterLink).urlTree?.toString()).toBe(
+			'/lines/4200_0',
+		)
+		expect(link.nativeElement.textContent).toContain('Alameda - Odivelas')
 	})
 
 	it('sorts results ascending by shortName, regardless of color', () => {

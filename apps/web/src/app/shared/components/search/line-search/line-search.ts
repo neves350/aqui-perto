@@ -43,7 +43,6 @@ export class LineSearch {
 	readonly showAllOnEmptyQuery = input(false)
 
 	readonly query = signal('')
-	readonly selectedLineId = signal<string | null>(null)
 
 	private readonly state = toSignal(
 		toObservable(this.query).pipe(
@@ -76,11 +75,5 @@ export class LineSearch {
 
 	onQueryChange(value: string): void {
 		this.query.set(value)
-	}
-
-	toggleLine(lineId: string): void {
-		this.selectedLineId.update((current) =>
-			current === lineId ? null : lineId,
-		)
 	}
 }
