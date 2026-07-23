@@ -5,10 +5,14 @@
 } @else {
 <ul>
 	@for (arrival of arrivalsWithMinutes(); track arrival.tripId) {
-	<li>
-		{{ arrival.lineName }} — {{ arrival.minutesUntilArrival }} min ({{
-		arrival.arrivalTime
-		}}h)
+	<li class="mb-1">
+		<button hlmBtn type="button" variant="ghost" class="cursor-pointer">
+			<span class="inline-flex items-center justify-center rounded px-2 py-1 text-sm font-bold">{{ arrival.lineName
+				}}</span>
+			<span>{{ arrival.minutesUntilArrival }} min ({{
+				arrival.arrivalTime
+				}}h)</span>
+		</button>
 	</li>
 	}
 </ul>

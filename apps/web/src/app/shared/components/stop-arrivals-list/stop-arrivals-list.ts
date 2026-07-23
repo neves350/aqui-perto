@@ -3,6 +3,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop'
 import { CarrisService } from '@core/services/carris.service'
 import { map, Observable, startWith, switchMap, timer } from 'rxjs'
 import { Arrival } from '@/shared/models/arrival.model'
+import { HlmButton } from '@/shared/ui/button/src'
 
 interface ArrivalsState {
 	loading: boolean
@@ -31,7 +32,7 @@ function minutesUntilArrival(arrivalTime: string, now: Date): number {
 
 @Component({
 	selector: 'app-stop-arrivals-list',
-	imports: [],
+	imports: [HlmButton],
 	templateUrl: './stop-arrivals-list.html',
 })
 export class StopArrivalsList {
