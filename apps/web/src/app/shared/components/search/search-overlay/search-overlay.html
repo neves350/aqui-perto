@@ -3,12 +3,13 @@
 		<svg lucideSearch class="size-4"></svg>
 	</button>
 
-	<hlm-dialog-content *hlmDialogPortal="let ctx" class="flex max-h-[45vh] w-2xl max-w-[calc(100vw-2rem)] flex-col">
+	<hlm-dialog-content *hlmDialogPortal="let ctx"
+		class="flex max-h-[45vh] w-2xl max-w-[calc(100vw-2rem)] md:w-3xl md:max-w-[calc(150vw-3rem)] flex-col">
 		<div hlmTabs [tab]="activeTab()" (tabActivated)="onTabActivated($event)"
 			class="flex flex-1 flex-col gap-3 overflow-hidden">
 			<div hlmTabsList>
-				<button hlmTabsTrigger="linha">Linha</button>
-				<button hlmTabsTrigger="paragem">Paragem</button>
+				<button hlmTabsTrigger="linha" class="cursor-pointer">Linha</button>
+				<button hlmTabsTrigger="paragem" class="cursor-pointer">Paragem</button>
 			</div>
 
 			<div hlmTabsContent="linha" class="flex-1 overflow-y-auto">
