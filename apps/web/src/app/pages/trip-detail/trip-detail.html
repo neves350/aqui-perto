@@ -1,0 +1,59 @@
+<div class="content-width flex flex-col gap-4 p-4">
+	<h1>Detalhe da viagem</h1>
+
+	@if (loading()) {
+	<div class="flex items-center justify-center py-8">
+		<hlm-spinner class="size-8" aria-label="A calcular o trajeto..." />
+	</div>
+	} @else if (result(); as result) {
+	@if (result.found) {
+	<p>Tempo total estimado: {{ result.totalTimeMinutes }} min</p>
+	@if (formattedFare(); as fare) {
+	<p>Tarifa estimada: {{ fare }} €</p>
+	}
+
+	<ol class="m-0 flex list-none flex-col gap-4 p-0">
+		@for (detail of legDetails(); track detail.leg.lineId + detail.leg.departureTime) {
+		<li>
+			<h2>
+				{{ detail.leg.lineName }} · {{ detail.leg.departureTime }} -
+				{{ detail.leg.arrivalTime }} ({{ detail.durationMinutes }} min)
+			</h2>
+
+			@if (detail.intermediateStops.length > 0) {
+			<ul class="m-0 list-none p-0">
+				@for (stop of detail.intermediateStops; track stop.stopId) {
+				<li>{{ stop.name }}</li>
+				}
+			</ul>
+			}
+		</li>
+		}
+	</ol>
+
+	<div class="flex flex-col gap-1">
+		<p>
+			Lotação:
+			@if (occupancyLevel(); as occupancy) {
+			{{ occupancy }}
+			} @else {
+			Disponível brevemente.
+			}
+		</p>
+		<p>
+			Mapa ao vivo:
+			@if (liveMapAvailable()) {
+			Disponível.
+			} @else {
+			Disponível brevemente.
+			}
+		</p>
+	</div>
+	} @else {
+	<p>
+		Não encontrámos um trajeto direto ou com 1 transbordo entre estas
+		paragens.
+	</p>
+	}
+	}
+</div>
