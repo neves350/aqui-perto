@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
 import { RouterLink } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
-import { LucideArrowRight } from '@lucide/angular'
+import { LucideArrowRight, LucideSearch } from '@lucide/angular'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 import {
 	debounceTime,
@@ -34,7 +34,14 @@ function compareShortName(a: string, b: string): number {
 
 @Component({
 	selector: 'app-line-search',
-	imports: [RouterLink, HlmSkeleton, HlmInput, HlmButton, LucideArrowRight],
+	imports: [
+		RouterLink,
+		HlmSkeleton,
+		HlmInput,
+		HlmButton,
+		LucideArrowRight,
+		LucideSearch,
+	],
 	templateUrl: './line-search.html',
 })
 export class LineSearch {

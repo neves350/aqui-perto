@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
 import { CarrisService } from '@core/services/carris.service'
+import { LucideSearch } from '@lucide/angular'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 import {
 	debounceTime,
@@ -32,7 +33,7 @@ function sortByName(stops: Stop[]): Stop[] {
 
 @Component({
 	selector: 'app-stop-search',
-	imports: [StopArrivalsList, HlmSkeleton, HlmInput, HlmButton],
+	imports: [StopArrivalsList, HlmSkeleton, HlmInput, HlmButton, LucideSearch],
 	templateUrl: './stop-search.html',
 })
 export class StopSearch {
