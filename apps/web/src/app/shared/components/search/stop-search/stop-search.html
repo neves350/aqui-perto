@@ -21,7 +21,7 @@
 			{{ stop.name }}
 		</button>
 
-		@if (selectedStopId() === stop.id) {
+		@if (selectedStopId() === stop.id && !hideArrivals()) {
 		<app-stop-arrivals-list [stopId]="stop.id" />
 		}
 	</li>

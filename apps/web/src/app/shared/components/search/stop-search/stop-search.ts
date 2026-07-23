@@ -1,4 +1,11 @@
-import { Component, computed, inject, input, signal } from '@angular/core'
+import {
+	Component,
+	computed,
+	inject,
+	input,
+	output,
+	signal,
+} from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
 import { CarrisService } from '@core/services/carris.service'
 import { LucideSearch } from '@lucide/angular'
@@ -40,6 +47,9 @@ export class StopSearch {
 	private readonly carrisService = inject(CarrisService)
 
 	readonly showAllOnEmptyQuery = input(false)
+	readonly hideArrivals = input(false)
+
+	readonly stopSelected = output<Stop>()
 
 	readonly query = signal('')
 	readonly selectedStopId = signal<string | null>(null)
@@ -77,8 +87,16 @@ export class StopSearch {
 	}
 
 	toggleStop(stopId: string): void {
+		const wasSelected = this.selectedStopId() === stopId
 		this.selectedStopId.update((current) =>
 			current === stopId ? null : stopId,
 		)
+
+		if (!wasSelected) {
+			const stop = this.stops().find((s) => s.id === stopId)
+			if (stop) {
+				this.stopSelected.emit(stop)
+			}
+		}
 	}
 }

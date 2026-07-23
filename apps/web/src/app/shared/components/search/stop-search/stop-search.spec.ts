@@ -4,6 +4,7 @@ import { CarrisService } from '@core/services/carris.service'
 import { carrisServiceMock } from '@core/testing/mocks'
 import { of, Subject } from 'rxjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { StopArrivalsList } from '@/shared/components/stop-arrivals-list/stop-arrivals-list'
 import { StopSearch } from './stop-search'
 
 describe('StopSearch', () => {
@@ -162,5 +163,65 @@ describe('StopSearch', () => {
 
 		component.toggleStop('stop-1')
 		expect(component.selectedStopId()).toBeNull()
+	})
+
+	it('emits stopSelected with the chosen stop when selected', () => {
+		vi.useFakeTimers()
+		carrisServiceMock.searchStops.mockReturnValue(
+			of([{ id: 'stop-1', name: 'Praça de Espanha', lat: 38.72, lon: -9.15 }]),
+		)
+		carrisServiceMock.getArrivals.mockReturnValue(of([]))
+
+		fixture = TestBed.createComponent(StopSearch)
+		component = fixture.componentInstance
+		const emitted: { id: string }[] = []
+		component.stopSelected.subscribe((stop) => emitted.push(stop))
+		fixture.detectChanges()
+
+		component.onQueryChange('Espanha')
+		vi.advanceTimersByTime(300)
+		fixture.detectChanges()
+
+		component.toggleStop('stop-1')
+
+		expect(emitted).toEqual([
+			{ id: 'stop-1', name: 'Praça de Espanha', lat: 38.72, lon: -9.15 },
+		])
+	})
+
+	it('does not emit stopSelected when deselecting a stop', () => {
+		fixture = TestBed.createComponent(StopSearch)
+		component = fixture.componentInstance
+		const emitted: { id: string }[] = []
+		component.stopSelected.subscribe((stop) => emitted.push(stop))
+		fixture.detectChanges()
+
+		component.toggleStop('stop-1')
+		component.toggleStop('stop-1')
+
+		expect(emitted).toEqual([])
+	})
+
+	it('hides the arrivals list for the selected stop when hideArrivals is set', () => {
+		vi.useFakeTimers()
+		carrisServiceMock.searchStops.mockReturnValue(
+			of([{ id: 'stop-1', name: 'Praça de Espanha', lat: 38.72, lon: -9.15 }]),
+		)
+
+		fixture = TestBed.createComponent(StopSearch)
+		component = fixture.componentInstance
+		fixture.componentRef.setInput('hideArrivals', true)
+		fixture.detectChanges()
+
+		component.onQueryChange('Espanha')
+		vi.advanceTimersByTime(300)
+		fixture.detectChanges()
+
+		component.toggleStop('stop-1')
+		fixture.detectChanges()
+
+		expect(
+			fixture.debugElement.query(By.directive(StopArrivalsList)),
+		).toBeNull()
 	})
 })
