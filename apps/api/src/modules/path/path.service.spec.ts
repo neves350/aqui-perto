@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { mockCarris } from 'src/__mocks__/carris.mock'
 import { CarrisLine, CarrisPattern } from 'src/common/types/carris.types'
 import { CarrisClientService } from 'src/integrations/carris/carris-client.service'
+import { CarrisPatternRepository } from './helpers/carris-pattern.repository'
 import { PathService } from './path.service'
 
 function buildLine(overrides: Partial<CarrisLine>): CarrisLine {
@@ -49,6 +50,7 @@ describe('PathService', () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				PathService,
+				CarrisPatternRepository,
 				{ provide: CarrisClientService, useValue: mockCarris },
 			],
 		}).compile()
