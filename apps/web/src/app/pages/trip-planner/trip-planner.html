@@ -51,13 +51,16 @@
 
 		@if (!loading() && result(); as result) {
 		@if (result.found && selectedStopIds(); as ids) {
-		<app-trip-result [result]="result" [originStopId]="ids.originStopId" [destinationStopId]="ids.destinationStopId"
-			[departureTime]="departureTime()" />
+		<ol class="m-0 flex list-none flex-col gap-4 p-0">
+			@for (option of options(); track $index) {
+			<li>
+				<app-trip-result [option]="option" [optionIndex]="$index" [originStopId]="ids.originStopId"
+					[destinationStopId]="ids.destinationStopId" [departureTime]="departureTime()" />
+			</li>
+			}
+		</ol>
 		} @else if (!result.found) {
-		<p>
-			Não encontrámos um trajeto direto ou com 1 transbordo entre estas
-			paragens.
-		</p>
+		<p>Não encontrámos nenhum trajeto entre estas paragens.</p>
 		}
 		}
 	</div>

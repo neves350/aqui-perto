@@ -141,7 +141,7 @@ describe('CarrisApi', () => {
 				!r.params.has('departureTime'),
 		)
 		expect(req.request.method).toBe('GET')
-		req.flush({ found: false, reason: 'no-0-1-transfer-combination' })
+		req.flush({ found: false, reason: 'no-path-found' })
 	})
 
 	it('getPath requests /path with a departureTime param when given', () => {
@@ -163,18 +163,22 @@ describe('CarrisApi', () => {
 		expect(req.request.method).toBe('GET')
 		req.flush({
 			found: true,
-			legs: [
+			results: [
 				{
-					lineId: '4200_0',
-					lineName: '758',
-					originStopId: '070001',
-					destinationStopId: '070002',
-					departureTime: '08:00',
-					arrivalTime: '08:20',
+					legs: [
+						{
+							lineId: '4200_0',
+							lineName: '758',
+							originStopId: '070001',
+							destinationStopId: '070002',
+							departureTime: '08:00',
+							arrivalTime: '08:20',
+						},
+					],
+					totalTimeMinutes: 20,
+					estimatedFare: 1.3,
 				},
 			],
-			totalTimeMinutes: 20,
-			estimatedFare: 1.3,
 		})
 	})
 

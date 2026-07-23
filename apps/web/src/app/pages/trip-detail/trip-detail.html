@@ -6,8 +6,8 @@
 		<hlm-spinner class="size-8" aria-label="A calcular o trajeto..." />
 	</div>
 	} @else if (result(); as result) {
-	@if (result.found) {
-	<p>Tempo total estimado: {{ result.totalTimeMinutes }} min</p>
+	@if (result.found && legs().length > 0) {
+	<p>Tempo total estimado: {{ totalTimeMinutes() }} min</p>
 	@if (formattedFare(); as fare) {
 	<p>Tarifa estimada: {{ fare }} €</p>
 	}
@@ -50,10 +50,7 @@
 		</p>
 	</div>
 	} @else {
-	<p>
-		Não encontrámos um trajeto direto ou com 1 transbordo entre estas
-		paragens.
-	</p>
+	<p>Não encontrámos nenhum trajeto entre estas paragens.</p>
 	}
 	}
 </div>

@@ -9,23 +9,27 @@ import { TripDetail } from './trip-detail'
 
 const DIRECT_RESULT: PathResult = {
 	found: true,
-	legs: [
+	results: [
 		{
-			lineId: '4200_0',
-			lineName: '758',
-			originStopId: '070001',
-			destinationStopId: '070004',
-			departureTime: '08:00',
-			arrivalTime: '08:30',
+			legs: [
+				{
+					lineId: '4200_0',
+					lineName: '758',
+					originStopId: '070001',
+					destinationStopId: '070004',
+					departureTime: '08:00',
+					arrivalTime: '08:30',
+				},
+			],
+			totalTimeMinutes: 30,
+			estimatedFare: 1.3,
 		},
 	],
-	totalTimeMinutes: 30,
-	estimatedFare: 1.3,
 }
 
 const NOT_FOUND_RESULT: PathResult = {
 	found: false,
-	reason: 'no-0-1-transfer-combination',
+	reason: 'no-path-found',
 }
 
 const LINE_ROUTE: LineRoute = {
@@ -92,6 +96,7 @@ describe('TripDetail', () => {
 
 		fixture = TestBed.createComponent(TripDetail)
 		component = fixture.componentInstance
+		fixture.componentRef.setInput('optionIndex', 0)
 	})
 
 	it('requests the path with the origin, destination and departure time from the route', () => {
@@ -146,7 +151,7 @@ describe('TripDetail', () => {
 		fixture.detectChanges()
 
 		expect(fixture.nativeElement.textContent).toContain(
-			'ão encontrámos um trajeto',
+			'Não encontrámos nenhum trajeto',
 		)
 	})
 
@@ -173,11 +178,53 @@ describe('TripDetail', () => {
 		expect(carrisServiceMock.getLineRoute).toHaveBeenCalledWith('4200_0')
 		expect(component.legDetails()).toEqual([
 			{
-				leg: DIRECT_RESULT.legs?.[0],
+				leg: DIRECT_RESULT.results?.[0]?.legs[0],
 				durationMinutes: 30,
 				intermediateStops: LINE_ROUTE.stops,
 			},
 		])
+	})
+
+	it('shows the option selected by optionIndex when there is more than one result', () => {
+		const secondLeg = {
+			lineId: '4300_0',
+			lineName: '112',
+			originStopId: '070001',
+			destinationStopId: '070004',
+			departureTime: '08:05',
+			arrivalTime: '08:40',
+		}
+		const multiResult: PathResult = {
+			found: true,
+			results: [
+				...(DIRECT_RESULT.results ?? []),
+				{ legs: [secondLeg], totalTimeMinutes: 35, estimatedFare: 1.55 },
+			],
+		}
+		carrisServiceMock.getPath.mockReturnValue(of(multiResult))
+		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+
+		fixture.componentRef.setInput('optionIndex', 1)
+		fixture.componentRef.setInput('originStopId', '070001')
+		fixture.componentRef.setInput('destinationStopId', '070004')
+		fixture.detectChanges()
+
+		expect(fixture.nativeElement.textContent).toContain('35')
+		expect(fixture.nativeElement.textContent).toContain('1,55')
+	})
+
+	it('shows a clear message when optionIndex is out of range', () => {
+		carrisServiceMock.getPath.mockReturnValue(of(DIRECT_RESULT))
+		carrisServiceMock.getLineRoute.mockReturnValue(of(LINE_ROUTE))
+
+		fixture.componentRef.setInput('optionIndex', 5)
+		fixture.componentRef.setInput('originStopId', '070001')
+		fixture.componentRef.setInput('destinationStopId', '070004')
+		fixture.detectChanges()
+
+		expect(fixture.nativeElement.textContent).toContain(
+			'Não encontrámos nenhum trajeto',
+		)
 	})
 
 	it('shows placeholders for occupancy and live map data by default', () => {

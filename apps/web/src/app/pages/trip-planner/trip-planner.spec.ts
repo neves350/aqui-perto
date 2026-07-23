@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing'
 import { By } from '@angular/platform-browser'
+import { provideRouter } from '@angular/router'
 import { CarrisService } from '@core/services/carris.service'
 import { carrisServiceMock } from '@core/testing/mocks'
 import { of, Subject, throwError } from 'rxjs'
@@ -7,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StopSearch } from '@/shared/components/search/stop-search/stop-search'
 import { PathResult } from '@/shared/models/path.model'
 import { TripPlanner } from './trip-planner'
+import { TripResult } from './trip-result/trip-result'
 
 const ORIGIN = {
 	id: '070001',
@@ -18,23 +20,75 @@ const DESTINATION = { id: '070002', name: 'Sete Rios', lat: 38.74, lon: -9.16 }
 
 const FOUND_RESULT: PathResult = {
 	found: true,
-	legs: [
+	results: [
 		{
-			lineId: '4200_0',
-			lineName: '758',
-			originStopId: ORIGIN.id,
-			destinationStopId: DESTINATION.id,
-			departureTime: '08:00',
-			arrivalTime: '08:20',
+			legs: [
+				{
+					lineId: '4200_0',
+					lineName: '758',
+					originStopId: ORIGIN.id,
+					destinationStopId: DESTINATION.id,
+					departureTime: '08:00',
+					arrivalTime: '08:20',
+				},
+			],
+			totalTimeMinutes: 20,
+			estimatedFare: 1.3,
 		},
 	],
-	totalTimeMinutes: 20,
-	estimatedFare: 1.3,
+}
+
+const MULTI_RESULT: PathResult = {
+	found: true,
+	results: [
+		{
+			legs: [
+				{
+					lineId: '4200_0',
+					lineName: '758',
+					originStopId: ORIGIN.id,
+					destinationStopId: DESTINATION.id,
+					departureTime: '08:00',
+					arrivalTime: '08:20',
+				},
+			],
+			totalTimeMinutes: 20,
+			estimatedFare: 1.3,
+		},
+		{
+			legs: [
+				{
+					lineId: '4300_0',
+					lineName: '112',
+					originStopId: ORIGIN.id,
+					destinationStopId: DESTINATION.id,
+					departureTime: '08:05',
+					arrivalTime: '08:30',
+				},
+			],
+			totalTimeMinutes: 25,
+			estimatedFare: 1.55,
+		},
+		{
+			legs: [
+				{
+					lineId: '4400_0',
+					lineName: '113',
+					originStopId: ORIGIN.id,
+					destinationStopId: DESTINATION.id,
+					departureTime: '08:10',
+					arrivalTime: '08:40',
+				},
+			],
+			totalTimeMinutes: 30,
+			estimatedFare: 1.55,
+		},
+	],
 }
 
 const NOT_FOUND_RESULT: PathResult = {
 	found: false,
-	reason: 'no-0-1-transfer-combination',
+	reason: 'no-path-found',
 }
 
 describe('TripPlanner', () => {
@@ -46,7 +100,10 @@ describe('TripPlanner', () => {
 
 		TestBed.configureTestingModule({
 			imports: [TripPlanner],
-			providers: [{ provide: CarrisService, useValue: carrisServiceMock }],
+			providers: [
+				{ provide: CarrisService, useValue: carrisServiceMock },
+				provideRouter([]),
+			],
 		})
 
 		fixture = TestBed.createComponent(TripPlanner)
@@ -152,6 +209,18 @@ describe('TripPlanner', () => {
 		expect(component.result()).toEqual(FOUND_RESULT)
 	})
 
+	it('lists every option returned by the API', () => {
+		carrisServiceMock.getPath.mockReturnValue(of(MULTI_RESULT))
+
+		component.onOriginSelected(ORIGIN)
+		component.onDestinationSelected(DESTINATION)
+		component.onSubmit()
+		fixture.detectChanges()
+
+		const options = fixture.debugElement.queryAll(By.directive(TripResult))
+		expect(options.length).toBe(3)
+	})
+
 	it('shows a clear message when no trip is found', () => {
 		carrisServiceMock.getPath.mockReturnValue(of(NOT_FOUND_RESULT))
 
@@ -161,7 +230,7 @@ describe('TripPlanner', () => {
 		fixture.detectChanges()
 
 		expect(fixture.nativeElement.textContent).toContain(
-			'ão encontrámos um trajeto',
+			'Não encontrámos nenhum trajeto',
 		)
 	})
 

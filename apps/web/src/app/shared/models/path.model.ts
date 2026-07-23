@@ -7,14 +7,18 @@ export class PathLeg {
 	arrivalTime!: string
 }
 
-export type PathNotFoundReason = 'no-0-1-transfer-combination'
+export class PathOption {
+	legs!: PathLeg[]
+	totalTimeMinutes!: number
+	estimatedFare?: number
+}
+
+export type PathNotFoundReason = 'no-path-found'
 
 export class PathResult {
 	found!: boolean
 	reason?: PathNotFoundReason
-	legs?: PathLeg[]
-	totalTimeMinutes?: number
-	estimatedFare?: number
+	results?: PathOption[]
 }
 
 export class PathQuery {

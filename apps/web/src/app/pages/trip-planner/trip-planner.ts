@@ -64,6 +64,7 @@ export class TripPlanner {
 
 	readonly loading = computed(() => this.state().loading)
 	readonly result = computed(() => this.state().result)
+	readonly options = computed(() => this.result()?.results ?? [])
 
 	readonly selectedStopIds = computed(() => {
 		const origin = this.originStop()

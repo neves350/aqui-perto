@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core'
 import { RouterLink } from '@angular/router'
-import { PathResult } from '@/shared/models/path.model'
+import { PathOption } from '@/shared/models/path.model'
 import { HlmButton } from '@/shared/ui/button/src'
 import { formatFare, transferCount } from '@/shared/utils/path-formatting'
 
@@ -10,14 +10,15 @@ import { formatFare, transferCount } from '@/shared/utils/path-formatting'
 	templateUrl: './trip-result.html',
 })
 export class TripResult {
-	readonly result = input.required<PathResult>()
+	readonly option = input.required<PathOption>()
+	readonly optionIndex = input.required<number>()
 	readonly originStopId = input.required<string>()
 	readonly destinationStopId = input.required<string>()
 	readonly departureTime = input('')
 
-	readonly legs = computed(() => this.result().legs ?? [])
+	readonly legs = computed(() => this.option().legs ?? [])
 	readonly formattedFare = computed(() =>
-		formatFare(this.result().estimatedFare),
+		formatFare(this.option().estimatedFare),
 	)
 	readonly transferCount = computed(() => transferCount(this.legs()))
 
@@ -26,6 +27,7 @@ export class TripResult {
 		return {
 			originStopId: this.originStopId(),
 			destinationStopId: this.destinationStopId(),
+			optionIndex: this.optionIndex(),
 			...(departureTime ? { departureTime } : {}),
 		}
 	})

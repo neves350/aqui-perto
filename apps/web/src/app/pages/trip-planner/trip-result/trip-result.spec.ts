@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing'
 import { provideRouter } from '@angular/router'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { PathResult } from '@/shared/models/path.model'
+import { PathOption } from '@/shared/models/path.model'
 import { TripResult } from './trip-result'
 
-const DIRECT_RESULT: PathResult = {
-	found: true,
+const DIRECT_OPTION: PathOption = {
 	legs: [
 		{
 			lineId: '4200_0',
@@ -20,8 +19,7 @@ const DIRECT_RESULT: PathResult = {
 	estimatedFare: 1.3,
 }
 
-const TRANSFER_RESULT: PathResult = {
-	found: true,
+const TRANSFER_OPTION: PathOption = {
 	legs: [
 		{
 			lineId: '4200_0',
@@ -54,7 +52,8 @@ describe('TripResult', () => {
 		})
 
 		fixture = TestBed.createComponent(TripResult)
-		fixture.componentRef.setInput('result', DIRECT_RESULT)
+		fixture.componentRef.setInput('option', DIRECT_OPTION)
+		fixture.componentRef.setInput('optionIndex', 0)
 		fixture.componentRef.setInput('originStopId', '070001')
 		fixture.componentRef.setInput('destinationStopId', '070002')
 	})
@@ -73,14 +72,14 @@ describe('TripResult', () => {
 	})
 
 	it('shows the number of transfers for a trip with a transfer', () => {
-		fixture.componentRef.setInput('result', TRANSFER_RESULT)
+		fixture.componentRef.setInput('option', TRANSFER_OPTION)
 		fixture.detectChanges()
 
 		expect(fixture.nativeElement.textContent).toContain('1 transbordo')
 	})
 
 	it('lists each leg in sequence with its line and times', () => {
-		fixture.componentRef.setInput('result', TRANSFER_RESULT)
+		fixture.componentRef.setInput('option', TRANSFER_OPTION)
 		fixture.detectChanges()
 
 		const legTexts = Array.from(
@@ -94,7 +93,7 @@ describe('TripResult', () => {
 		expect(legTexts[1]).toContain('08:30')
 	})
 
-	it('links to the trip detail page with the origin, destination and departure time', () => {
+	it('links to the trip detail page with the origin, destination, departure time and option index', () => {
 		fixture.componentRef.setInput('departureTime', '2026-07-23T08:00')
 		fixture.detectChanges()
 
@@ -102,8 +101,17 @@ describe('TripResult', () => {
 		expect(link.getAttribute('href')).toContain('/trip-detail')
 		expect(link.getAttribute('href')).toContain('originStopId=070001')
 		expect(link.getAttribute('href')).toContain('destinationStopId=070002')
+		expect(link.getAttribute('href')).toContain('optionIndex=0')
 		expect(link.getAttribute('href')).toContain(
 			'departureTime=2026-07-23T08:00',
 		)
+	})
+
+	it('includes the given option index in the trip detail link', () => {
+		fixture.componentRef.setInput('optionIndex', 2)
+		fixture.detectChanges()
+
+		const link = fixture.nativeElement.querySelector('a')
+		expect(link.getAttribute('href')).toContain('optionIndex=2')
 	})
 })

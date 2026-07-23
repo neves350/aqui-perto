@@ -1,4 +1,10 @@
-import { Component, computed, inject, input } from '@angular/core'
+import {
+	Component,
+	computed,
+	inject,
+	input,
+	numberAttribute,
+} from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
 import { CarrisService } from '@core/services/carris.service'
 import {
@@ -57,6 +63,7 @@ function intermediateStops(
 export class TripDetail {
 	private readonly carrisService = inject(CarrisService)
 
+	readonly optionIndex = input.required({ transform: numberAttribute })
 	readonly originStopId = input.required<string>()
 	readonly destinationStopId = input.required<string>()
 	readonly departureTime = input<string>()
@@ -90,10 +97,16 @@ export class TripDetail {
 
 	readonly loading = computed(() => this.state().loading)
 	readonly result = computed(() => this.state().result)
-	readonly legs = computed(() => this.result()?.legs ?? [])
+	private readonly selectedOption = computed(
+		() => this.result()?.results?.[this.optionIndex()],
+	)
+	readonly legs = computed(() => this.selectedOption()?.legs ?? [])
+	readonly totalTimeMinutes = computed(
+		() => this.selectedOption()?.totalTimeMinutes,
+	)
 
 	readonly formattedFare = computed(() =>
-		formatFare(this.result()?.estimatedFare),
+		formatFare(this.selectedOption()?.estimatedFare),
 	)
 
 	private readonly legRoutes = toSignal(
