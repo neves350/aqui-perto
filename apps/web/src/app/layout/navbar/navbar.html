@@ -17,6 +17,12 @@
             : 'rounded-md px-3 py-1.5 font-sans text-xs cursor-pointer uppercase tracking-wider text-muted-foreground transition hover:text-foreground'">
           Inicio
         </a>
+        <a routerLink="/trip-planner" routerLinkActive #tripPlannerLink="routerLinkActive"
+          [class]="tripPlannerLink.isActive
+            ? 'rounded-md px-3 py-1.5 font-sans text-xs uppercase tracking-wider transition hover:text-foreground bg-muted/60 text-foreground'
+            : 'rounded-md px-3 py-1.5 font-sans text-xs cursor-pointer uppercase tracking-wider text-muted-foreground transition hover:text-foreground'">
+          Planear viagem
+        </a>
       </div>
 
       <div class="flex items-center gap-1">
@@ -41,6 +47,13 @@
                   ? 'rounded-md px-3 py-2 font-sans text-xs uppercase tracking-wider text-foreground bg-muted/60 transition hover:bg-accent hover:text-foreground border border-border'
                   : 'rounded-md px-3 py-2 font-sans text-xs uppercase tracking-wider text-foreground bg-links-sheet transition hover:bg-accent hover:text-foreground cursor-pointer border border-border'">
                 Inicio
+              </a>
+              <a routerLink="/trip-planner" routerLinkActive #mobileTripPlannerLink="routerLinkActive"
+                (click)="closeMobileMenu()"
+                [class]="mobileTripPlannerLink.isActive
+                  ? 'rounded-md px-3 py-2 font-sans text-xs uppercase tracking-wider text-foreground bg-muted/60 transition hover:bg-accent hover:text-foreground border border-border'
+                  : 'rounded-md px-3 py-2 font-sans text-xs uppercase tracking-wider text-foreground bg-links-sheet transition hover:bg-accent hover:text-foreground cursor-pointer border border-border'">
+                Planear viagem
               </a>
             </nav>
           </hlm-sheet-content>

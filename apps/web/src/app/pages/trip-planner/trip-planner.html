@@ -1,0 +1,64 @@
+<div class="content-width">
+	<div class="flex flex-col gap-4 p-4">
+		<h1 class="font-semibold text-xl md:text-2xl">
+			Planear viagem
+			<p class="font-normal text-xs md:text-sm mt-2">
+				Calculamos o caminho mais rápido — com transbordo se valer a pena.
+			</p>
+		</h1>
+
+		<div class="flex flex-col gap-2 mt-8">
+			<span class="text-[16px] md:text-lg font-semibold">Origem</span>
+			@if (originStop(); as origin) {
+			<div class="flex items-center justify-between gap-2">
+				<span>{{ origin.name }}</span>
+				<button type="button" hlmBtn variant="outline" size="sm" (click)="clearOrigin()">
+					Alterar
+				</button>
+			</div>
+			} @else {
+			<app-stop-search [hideArrivals]="true" (stopSelected)="onOriginSelected($event)" />
+			}
+		</div>
+
+		<div class="flex flex-col gap-2">
+			<span class="text-[16px] md:text-lg font-semibold">Destino</span>
+			@if (destinationStop(); as destination) {
+			<div class="flex items-center justify-between gap-2">
+				<span>{{ destination.name }}</span>
+				<button type="button" hlmBtn variant="outline" size="sm" (click)="clearDestination()">
+					Alterar
+				</button>
+			</div>
+			} @else {
+			<app-stop-search [hideArrivals]="true" (stopSelected)="onDestinationSelected($event)" />
+			}
+		</div>
+
+		<div class="flex flex-col gap-2">
+			<label for="departure-time">Hora de partida (opcional, predefinição: agora)</label>
+			<input hlmInput id="departure-time" type="datetime-local" [value]="departureTime()"
+				(input)="onDepartureTimeChange($any($event.target).value)" />
+		</div>
+
+		<button type="button" hlmBtn size="lg" [disabled]="!canSubmit()" (click)="onSubmit()">
+			Calcular trajeto mais rápido
+		</button>
+
+		@if (loading()) {
+		<p>A calcular o trajeto...</p>
+		}
+
+		@if (!loading() && result(); as result) {
+		@if (result.found && selectedStopIds(); as ids) {
+		<app-trip-result [result]="result" [originStopId]="ids.originStopId" [destinationStopId]="ids.destinationStopId"
+			[departureTime]="departureTime()" />
+		} @else if (!result.found) {
+		<p>
+			Não encontrámos um trajeto direto ou com 1 transbordo entre estas
+			paragens.
+		</p>
+		}
+		}
+	</div>
+</div>

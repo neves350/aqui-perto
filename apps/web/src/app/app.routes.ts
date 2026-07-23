@@ -13,4 +13,10 @@ export const routes: Routes = [
 		loadComponent: () =>
 			import('@pages/line-detail/line-detail').then((m) => m.LineDetail),
 	},
+	{
+		path: 'trip-planner',
+		title: 'Planear viagem - Aqui Perto',
+		loadComponent: () =>
+			import('@pages/trip-planner/trip-planner').then((m) => m.TripPlanner),
+	},
 ]
