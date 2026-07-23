@@ -1,0 +1,25 @@
+<div class="flex flex-col gap-3">
+	<p>Tempo total estimado: {{ result().totalTimeMinutes }} min</p>
+	@if (formattedFare(); as fare) {
+	<p>Tarifa estimada: {{ fare }} €</p>
+	}
+	@if (transferCount() === 0) {
+	<p>Trajeto direto</p>
+	} @else {
+	<p>{{ transferCount() }} transbordo</p>
+	}
+
+	<ol class="m-0 list-none p-0">
+		@for (leg of legs(); track leg.lineId + leg.departureTime) {
+		<li class="flex items-center justify-between gap-2 py-1">
+			<span class="inline-flex items-center justify-center rounded px-2 py-1 text-sm font-bold">{{ leg.lineName
+				}}</span>
+			<span>{{ leg.departureTime }} - {{ leg.arrivalTime }}</span>
+		</li>
+		}
+	</ol>
+
+	<a hlmBtn [routerLink]="['/trip-detail']" [queryParams]="detailQueryParams()">
+		Ver detalhe da viagem
+	</a>
+</div>
